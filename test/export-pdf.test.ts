@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { dirname, join } from 'node:path'
+import { tmpdir } from 'node:os'
 import {
   PDFArray,
   PDFDict,
@@ -21,8 +22,8 @@ const COLOR_PNG =
 const BLACK_PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAEUlEQVR4nGNgYGD4j4ZJFQAABloP8SzApEkAAAAASUVORK5CYII='
 
-/** Illustrator実機確認用サンプルPDFの出力先 */
-const SAMPLE_PDF_PATH = '/Users/tairaikushi/.claude/jobs/27ad1f81/tmp/acsta-sample-layered.pdf'
+/** Illustrator実機確認用サンプルPDFの出力先（CIでも書けるようOSの一時ディレクトリ） */
+const SAMPLE_PDF_PATH = join(tmpdir(), 'acsta-sample-layered.pdf')
 
 /** 中心(cx,cy)・幅w×高h・rot度（時計回り・y下向き系）の矩形リングを作る */
 function rotatedRect(cx: number, cy: number, w: number, h: number, rot: number): Ring {

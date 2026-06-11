@@ -10,4 +10,9 @@ declare module 'node:fs' {
 
 declare module 'node:path' {
   export function dirname(p: string): string
+  export function join(...parts: string[]): string
+}
+
+declare module 'node:os' {
+  export function tmpdir(): string
 }
