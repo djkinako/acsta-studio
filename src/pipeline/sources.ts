@@ -43,7 +43,8 @@ export async function importPng(blob: Blob, name: string): Promise<SourceImage> 
   const ctx = canvas.getContext('2d')!
   ctx.drawImage(bitmap, 0, 0)
   const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height)
-  const contoursPx = extractContours(data.data, bitmap.width, bitmap.height, 0)
+  // 閾値2: 写真切り抜きPNGの目に見えない半透明ハロー（alpha 1〜2）を輪郭に拾わない
+  const contoursPx = extractContours(data.data, bitmap.width, bitmap.height, 2)
   const trimBBox = bboxOf(contoursPx)
   const source: SourceImage = {
     id: `src${nextSourceId++}`,
@@ -99,6 +100,7 @@ export function getObjectGeometry(
     widthMm.toFixed(3),
     params.offsetMm,
     params.roundMm,
+    params.smoothMm,
     params.tolMm,
     params.minGapMm,
     params.includeHoles,
@@ -121,6 +123,7 @@ export function getObjectGeometry(
   const cutline = generateCutline(contour, {
     offsetMm: params.offsetMm,
     roundRadiusMm: params.roundMm,
+    smoothMm: params.smoothMm,
     includeHoles: params.includeHoles,
   })
   const gapPoly = inflateForGapCheck(cutline, params.minGapMm)

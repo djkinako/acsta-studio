@@ -138,6 +138,49 @@ describe('generateCutline', () => {
     expect(cut).toHaveLength(1)
   })
 
+  it('なめらか補正で凸側のガタつきが除去される（角丸めだけでは残る）', () => {
+    // 10mm四方の右辺に高さ0.8mm・幅0.4mmのトゲ（凸ノイズ）を3本生やす
+    const noisy: Ring = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      ...[2, 5, 8].flatMap((y) => [
+        { x: 10, y: y - 0.2 },
+        { x: 10.8, y },
+        { x: 10, y: y + 0.2 },
+      ]),
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ]
+    const perimeter = (polys: Ring[]) =>
+      polys.reduce((sum, ring) => {
+        let p = 0
+        for (let i = 0; i < ring.length; i++) {
+          const a = ring[i]
+          const b = ring[(i + 1) % ring.length]
+          p += Math.hypot(b.x - a.x, b.y - a.y)
+        }
+        return sum + p
+      }, 0)
+    const bumpy = generateCutline([noisy], { offsetMm: 0.5, roundRadiusMm: 0.5 })
+    const smooth = generateCutline([noisy], { offsetMm: 0.5, roundRadiusMm: 0.5, smoothMm: 0.6 })
+    // トゲの出っ張り跡が削れて、輪郭長も面積も減る
+    expect(perimeter(smooth)).toBeLessThan(perimeter(bumpy) - 1)
+    const areaOf = (polys: Ring[]) => polys.reduce((s, r) => s + Math.abs(signedArea(r)), 0)
+    expect(areaOf(smooth)).toBeLessThan(areaOf(bumpy))
+  })
+
+  it('なめらか補正は絶対防衛ライン（元輪郭+offset×0.2）より内側に入らない', () => {
+    // 極端な補正量でも、生の輪郭+offset×0.2 のフロアを面積で下回らない
+    const aggressive = generateCutline([square(10)], {
+      offsetMm: 0.5,
+      roundRadiusMm: 0,
+      smoothMm: 2,
+    })
+    const hardFloor = generateCutline([square(10)], { offsetMm: 0.1, roundRadiusMm: 0 })
+    const areaOf = (polys: Ring[]) => polys.reduce((s, r) => s + Math.abs(signedArea(r)), 0)
+    expect(areaOf(aggressive)).toBeGreaterThanOrEqual(areaOf(hardFloor) - 0.1)
+  })
+
   it('外周のみモードでは穴が除去され、穴も含むモードでは残る', () => {
     const outer = square(20)
     const hole = square(6, 7, 7).reverse() // 逆回転 = 穴

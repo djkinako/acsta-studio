@@ -281,6 +281,16 @@ export default function SettingsModal({ onClose }: Props) {
                 onChange={(v) => s.setParam('roundMm', v)}
               />
               <SliderRow
+                label="なめらか補正（ガタつき除去）"
+                value={s.params.smoothMm}
+                min={0}
+                max={2}
+                step={0.1}
+                suffix="mm"
+                format={(v) => v.toFixed(1)}
+                onChange={(v) => s.setParam('smoothMm', v)}
+              />
+              <SliderRow
                 label="オブジェクト最小間隔"
                 value={s.params.minGapMm}
                 min={2}

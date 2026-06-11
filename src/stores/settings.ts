@@ -18,6 +18,8 @@ export const DPI_PRESETS = [300, 350, 400]
 export interface GenerationParams {
   offsetMm: number
   roundMm: number
+  /** なめらか補正（mm）。凸側のガタつき除去（オープニング） */
+  smoothMm: number
   tolMm: number
   minGapMm: number
   /** 白版の縮小量（px、元画像解像度基準） */
@@ -28,6 +30,7 @@ export interface GenerationParams {
 const DEFAULT_PARAMS: GenerationParams = {
   offsetMm: 0.5,
   roundMm: 0.5,
+  smoothMm: 0.5,
   tolMm: 0.05,
   minGapMm: 4.0,
   whiteShrinkPx: 2,

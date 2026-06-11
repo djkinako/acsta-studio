@@ -1,5 +1,7 @@
 import ClipperLib from 'clipper-lib'
 import type { ClipperPaths } from 'clipper-lib'
+import { simplifyClosed } from './simplify'
+import { smoothClosedCurve } from './smoothcurve'
 import type { Polygons, Ring } from './types'
 
 /**
@@ -49,6 +51,12 @@ export interface CutlineOptions {
   offsetMm: number
   /** 角丸め半径（mm）。クロージング（+r → −r）で凹部をスムージング。SPEC 5: デフォルト 0.5 */
   roundRadiusMm: number
+  /**
+   * なめらか補正（mm）。オープニング（−s → +s）で凸側のガタつき
+   * （写真切り抜きのフチノイズ等）を削ぎ落とす。
+   * 角丸め（凹を埋める）と対になる処理。0 = 無効
+   */
+  smoothMm?: number
   /** 輪郭の穴の扱い。false = 外周のみ（デフォルト） */
   includeHoles?: boolean
 }
@@ -66,10 +74,11 @@ export interface CutlineOptions {
  * +(offset+r) の1回膨張と等価。パス数を1回分節約している。
  */
 export function generateCutline(contoursMm: Polygons, opts: CutlineOptions): Polygons {
-  const { offsetMm, roundRadiusMm, includeHoles = false } = opts
+  const { offsetMm, roundRadiusMm, smoothMm = 0, includeHoles = false } = opts
   if (contoursMm.length === 0) return []
 
-  let paths = union(toClipper(contoursMm))
+  const base = union(toClipper(contoursMm))
+  let paths = base
 
   const grow = (offsetMm + roundRadiusMm) * SCALE
   if (grow > 0) {
@@ -77,6 +86,33 @@ export function generateCutline(contoursMm: Polygons, opts: CutlineOptions): Pol
   }
   if (roundRadiusMm > 0) {
     paths = inflate(paths, -roundRadiusMm * SCALE)
+  }
+
+  if (smoothMm > 0) {
+    // 1) オープニング: 鋭いトゲ状の出っ張り（幅 ~2×smoothMm まで）を除去
+    paths = inflate(paths, -smoothMm * SCALE)
+    paths = inflate(paths, smoothMm * SCALE)
+    // 2) ガウシアン曲線平滑化: モルフォロジーが素通しする中波長の
+    //    「うねり」（写真切り抜きのフチノイズ由来）を直接減衰させる
+    const smoothed = fromClipper(paths).map((ring) =>
+      simplifyClosed(smoothClosedCurve(ring, smoothMm), 0.02),
+    )
+    paths = toClipper(smoothed)
+    // 3) 安全フロア（二重）: 平滑化は曲線を内側に縮めることがあるため、
+    //    a. ノイズ除去後のシルエット + offset/2 — なめらかな主フロア。
+    //       フロアを生の輪郭にするとノイズの歯まで保護して補正が
+    //       無効化されるため、フロア側も同じ平滑化を通す
+    //    b. 生の輪郭 + offset×0.2 — 絶対防衛ライン。どんな補正強度でも
+    //       不透明画素に offset の2割未満まで近づくことはない
+    //       （角の強い平滑化で絵に食い込む事故の構造的防止）
+    let floorBase = inflate(base, -smoothMm * SCALE)
+    floorBase = inflate(floorBase, smoothMm * SCALE)
+    const floorSmoothed = fromClipper(floorBase).map((ring) =>
+      simplifyClosed(smoothClosedCurve(ring, smoothMm), 0.02),
+    )
+    const floorA = inflate(toClipper(floorSmoothed), offsetMm * 0.5 * SCALE)
+    const floorB = inflate(base, offsetMm * 0.2 * SCALE)
+    paths = union([...paths, ...floorA, ...floorB])
   }
 
   if (!includeHoles && paths.length > 1) {
