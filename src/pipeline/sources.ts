@@ -6,8 +6,10 @@ import { alphaMask, erodeMask, maskToRgba } from '../geometry/erosion'
 import { attachmentPolygonsAt, largestRing } from '../parts/attach'
 import {
   ATTACHMENT_DEFS,
+  INSERT_DEPTH_MM,
   JUNCTION_ROUND_MM,
   STAND_DEFS,
+  TAB_DEFS,
   standRings,
   type AttachmentId,
   type PartSize,
@@ -94,8 +96,17 @@ export interface ObjectGeometry {
   /** ローカル座標での画像左上のオフセット（mm） */
   imageOffsetX: number
   imageOffsetY: number
-  /** 吸着パーツのハンドル・ラベル位置と外向き法線（ローカルmm） */
-  tabMarkers: Array<{ x: number; y: number; nx: number; ny: number; size: AttachmentId; index: number }>
+  /** 吸着パーツのハンドル・ラベル位置と取り付け方向（ローカルmm） */
+  tabMarkers: Array<{
+    x: number
+    y: number
+    nx: number
+    ny: number
+    size: AttachmentId
+    index: number
+    /** タブのみ: 先端3mm強調バンドの中心とタブ全長 */
+    tip?: { x: number; y: number; angleDeg: number; lengthMm: number }
+  }>
 }
 
 const geomCache = new Map<string, ObjectGeometry>()
@@ -105,9 +116,15 @@ export function getObjectGeometry(
   widthMm: number,
   params: GenerationParams,
   tabs: PlacedTab[] = [],
+  /** オブジェクトの回転（deg）。タブは紙面に対して垂直に付けるため必要 */
+  rotDeg = 0,
 ): ObjectGeometry | null {
   const source = sources.get(sourceId)
   if (!source) return null
+  // タブ方向はワールド垂直 → 回転が変わると形状も変わる（0.5°単位でキャッシュ）
+  const rotKey = tabs.some((tab) => ATTACHMENT_DEFS[tab.size].kind === 'tab')
+    ? (Math.round(rotDeg / 0.5) * 0.5).toFixed(1)
+    : '0'
   const key = [
     sourceId,
     widthMm.toFixed(3),
@@ -117,7 +134,8 @@ export function getObjectGeometry(
     params.tolMm,
     params.minGapMm,
     params.includeHoles,
-    tabs.map((tab) => `${tab.size}@${tab.t.toFixed(4)}`).join(','),
+    rotKey,
+    tabs.map((tab) => `${tab.size}@${tab.t.toFixed(4)}@${tab.lengthMm ?? ''}`).join(','),
   ].join('|')
   const cached = geomCache.get(key)
   if (cached) return cached
@@ -145,18 +163,39 @@ export function getObjectGeometry(
   const tabMarkers: ObjectGeometry['tabMarkers'] = []
   const attachRing = largestRing(cutline)
   if (attachRing && tabs.length > 0) {
+    // タブはスタンドとして機能するよう紙面に対して常に垂直（ワールド下向き）。
+    // 画像のフチの微妙な歪みで法線が傾いても、タブの角度は影響を受けない
+    const rotRad = (rotDeg * Math.PI) / 180
+    const verticalDown = { x: Math.sin(rotRad), y: Math.cos(rotRad) }
     for (let i = 0; i < tabs.length; i++) {
-      const { polygons, pose } = attachmentPolygonsAt(attachRing, tabs[i].t, tabs[i].size)
-      cutline = unionPolygons(cutline, polygons)
       const def = ATTACHMENT_DEFS[tabs[i].size]
-      tabMarkers.push({
-        x: pose.point.x + pose.normal.x * def.markerMm,
-        y: pose.point.y + pose.normal.y * def.markerMm,
-        nx: pose.normal.x,
-        ny: pose.normal.y,
+      const isTab = def.kind === 'tab'
+      const lengthMm = isTab ? (tabs[i].lengthMm ?? TAB_DEFS[tabs[i].size as PartSize].heightMm) : undefined
+      const { polygons, pose, direction } = attachmentPolygonsAt(attachRing, tabs[i].t, tabs[i].size, {
+        direction: isTab ? verticalDown : undefined,
+        lengthMm,
+      })
+      cutline = unionPolygons(cutline, polygons)
+      const markerDist = isTab ? (lengthMm ?? def.markerMm * 2) / 2 : def.markerMm
+      const marker: ObjectGeometry['tabMarkers'][number] = {
+        x: pose.point.x + direction.x * markerDist,
+        y: pose.point.y + direction.y * markerDist,
+        nx: direction.x,
+        ny: direction.y,
         size: tabs[i].size,
         index: i,
-      })
+      }
+      if (isTab && lengthMm !== undefined) {
+        // 先端3mm（台座の板厚に刺さる部分）の強調バンド
+        const tipCenter = lengthMm - INSERT_DEPTH_MM / 2
+        marker.tip = {
+          x: pose.point.x + direction.x * tipCenter,
+          y: pose.point.y + direction.y * tipCenter,
+          angleDeg: (Math.atan2(direction.y, direction.x) * 180) / Math.PI - 90,
+          lengthMm,
+        }
+      }
+      tabMarkers.push(marker)
     }
     // 接合部（本体とパーツの境目にできる約90°の角）を丸める
     cutline = closeCorners(cutline, JUNCTION_ROUND_MM)
@@ -191,19 +230,21 @@ export function getStandGeometry(
   size: PartSize,
   minGapMm: number,
   widthMm?: number,
+  heightMm?: number,
 ): ObjectGeometry {
   const def = STAND_DEFS[size]
   const w = widthMm ?? def.widthMm
-  const key = `${size}|${minGapMm}|${w.toFixed(2)}`
+  const h = heightMm ?? def.heightMm
+  const key = `${size}|${minGapMm}|${w.toFixed(2)}|${h.toFixed(2)}`
   const cached = standGeomCache.get(key)
   if (cached) return cached
-  // 外形は比例スケール、穴の寸法はタブとの嵌合を守るため固定
-  const cutline = standRings(def, w)
+  // 外形は縦横自由、穴の寸法はタブとの嵌合を守るため固定
+  const cutline = standRings(def, w, h)
   const geometry: ObjectGeometry = {
     contour: cutline,
     cutline,
     gapPoly: inflateForGapCheck(cutline, minGapMm),
-    heightMm: (def.heightMm * w) / def.widthMm,
+    heightMm: h,
     imageWidthMm: 0,
     imageHeightMm: 0,
     imageOffsetX: 0,

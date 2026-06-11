@@ -13,7 +13,7 @@ import { useUi } from '../stores/ui'
 import { ringsToSvgPath } from '../geometry/offset'
 import { getObjectGeometry } from '../pipeline/sources'
 import { largestRing, nearestParamOnRing } from '../parts/attach'
-import { ATTACHMENT_DEFS, STAND_DEFS, standMinWidth } from '../parts/defs'
+import { ATTACHMENT_DEFS, INSERT_DEPTH_MM, STAND_DEFS, standMinHeight, standMinWidth } from '../parts/defs'
 import { worldToLocal, type ObjectView, type PairIndicator } from './EditorApp'
 import type { Rect } from '../geometry/transform'
 import type { ViolationResult } from '../pipeline/violations'
@@ -434,6 +434,22 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
         break
       }
       case 'scale': {
+        const obj = useProject.getState().objects.find((o) => o.id === drag.id)
+        if (obj?.type === 'stand' && obj.partSize) {
+          // 台座は縦横独立リサイズ（穴は固定）。形状生成が軽いので即時反映
+          const def = STAND_DEFS[obj.partSize]
+          const local = worldToLocal(mm, obj)
+          const w = Math.max(standMinWidth(def), Math.min(300, Math.abs(local.x) * 2))
+          const h = Math.max(standMinHeight(def), Math.min(150, Math.abs(local.y) * 2))
+          useProject
+            .getState()
+            .updateObject(
+              drag.id,
+              { widthMm: Math.round(w * 10) / 10, heightMm: Math.round(h * 10) / 10 },
+              true,
+            )
+          break
+        }
         const dist = Math.hypot(mm.x - drag.center.x, mm.y - drag.center.y)
         const factor = Math.max(0.05, dist / drag.startDist)
         const width = Math.max(5, Math.min(300, drag.origWidth * factor))
@@ -467,11 +483,7 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
       useProject.getState().select(null)
     }
     if (drag.type === 'scale' && scaling) {
-      const obj = useProject.getState().objects.find((o) => o.id === drag.id)
-      // 台座は穴の嵌合を守れる最小幅まで。画像は5mmまで
-      const minW =
-        obj?.type === 'stand' && obj.partSize ? standMinWidth(STAND_DEFS[obj.partSize]) : 5
-      const width = Math.max(minW, Math.min(300, drag.origWidth * scaling.factor))
+      const width = Math.max(5, Math.min(300, drag.origWidth * scaling.factor))
       useProject.getState().updateObject(drag.id, { widthMm: Math.round(width * 10) / 10 }, true)
       setScaling(null)
     }
@@ -660,13 +672,48 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   style={{ pointerEvents: 'none' }}
                 />
               )}
+              {/* タブ先端の差し込み3mm強調バンド（台座の板厚に刺さる部分） */}
+              {layerVisible.cut &&
+                geo.tabMarkers.map(
+                  (m) =>
+                    m.tip && (
+                      <g
+                        key={`tabtip-${m.index}`}
+                        transform={`translate(${m.tip.x},${m.tip.y}) rotate(${m.tip.angleDeg})`}
+                        style={{ pointerEvents: 'none' }}
+                      >
+                        <rect
+                          x={-ATTACHMENT_DEFS[m.size].widthMm / 2 + 0.4}
+                          y={-INSERT_DEPTH_MM / 2}
+                          width={ATTACHMENT_DEFS[m.size].widthMm - 0.8}
+                          height={INSERT_DEPTH_MM}
+                          rx={0.6}
+                          fill="rgba(226,109,142,0.3)"
+                          stroke="var(--accent)"
+                          strokeWidth={0.2}
+                          strokeDasharray="0.8 0.5"
+                        />
+                        <text
+                          x={ATTACHMENT_DEFS[m.size].widthMm / 2 + 1.2}
+                          y={1}
+                          style={{ fontSize: 2.4, fill: 'var(--accent-hover)', fontWeight: 800 }}
+                        >
+                          差込3mm
+                        </text>
+                      </g>
+                    ),
+                )}
               {/* 吸着パーツのラベル（パーツの先の法線方向に表示） */}
               {layerVisible.cut &&
                 geo.tabMarkers.map((m) => {
                   const label = ATTACHMENT_DEFS[m.size].label
                   const w = label.length * 2.1 + 4
-                  const lx = m.x + m.nx * (ATTACHMENT_DEFS[m.size].markerMm + 5)
-                  const ly = m.y + m.ny * (ATTACHMENT_DEFS[m.size].markerMm + 5)
+                  // マーカー（パーツ中央）から先端側へ。タブは長さ可変なので tip 基準
+                  const beyond = m.tip
+                    ? m.tip.lengthMm / 2 + 5
+                    : ATTACHMENT_DEFS[m.size].markerMm + 5
+                  const lx = m.x + m.nx * beyond
+                  const ly = m.y + m.ny * beyond
                   return (
                     <g key={`tablabel-${m.index}`} style={{ pointerEvents: 'none' }}>
                       <rect
@@ -744,11 +791,19 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                     const by = m.y + m.nx * px(26)
                     return (
                       <g key={`tabhandle-${m.index}`}>
-                        {/* 当たり判定を広げる透明円 */}
+                        {/* 当たり判定を広げる透明円（ハンドル＋ラベル帯までカバー） */}
                         <circle
                           cx={m.x}
                           cy={m.y}
-                          r={px(17)}
+                          r={px(22)}
+                          fill="transparent"
+                          style={{ cursor: 'grab' }}
+                          onPointerDown={(e) => onTabMarkerDown(e, obj.id, m.index)}
+                        />
+                        <circle
+                          cx={m.x + m.nx * (m.tip ? m.tip.lengthMm / 2 + 5 : ATTACHMENT_DEFS[m.size].markerMm + 5)}
+                          cy={m.y + m.ny * (m.tip ? m.tip.lengthMm / 2 + 5 : ATTACHMENT_DEFS[m.size].markerMm + 5)}
+                          r={px(18)}
                           fill="transparent"
                           style={{ cursor: 'grab' }}
                           onPointerDown={(e) => onTabMarkerDown(e, obj.id, m.index)}

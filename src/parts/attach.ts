@@ -98,16 +98,23 @@ export function attachmentPolygonsAt(
   ring: Ring,
   t: number,
   id: AttachmentId,
-): { polygons: Ring[]; pose: RingPose } {
+  opts: {
+    /** 取り付け方向（ローカル単位ベクトル）。省略時は輪郭の外向き法線 */
+    direction?: Point
+    /** タブの長さ（mm）。タブのみ有効 */
+    lengthMm?: number
+  } = {},
+): { polygons: Ring[]; pose: RingPose; direction: Point } {
   const pose = poseOnRing(ring, t)
-  // ローカル +y を外向き法線へ回す回転: R(θ)·(0,1) = n
-  const sin = -pose.normal.x
-  const cos = pose.normal.y
-  const polygons = ATTACHMENT_DEFS[id].rings().map((local) =>
+  const dir = opts.direction ?? pose.normal
+  // ローカル +y を取り付け方向へ回す回転: R(θ)·(0,1) = d
+  const sin = -dir.x
+  const cos = dir.y
+  const polygons = ATTACHMENT_DEFS[id].rings(opts.lengthMm).map((local) =>
     local.map((p) => ({
       x: pose.point.x + p.x * cos - p.y * sin,
       y: pose.point.y + p.x * sin + p.y * cos,
     })),
   )
-  return { polygons, pose }
+  return { polygons, pose, direction: dir }
 }

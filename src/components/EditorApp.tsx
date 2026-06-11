@@ -77,7 +77,7 @@ export default function EditorApp() {
     const result: ObjectView[] = []
     for (const obj of objects) {
       if (obj.type === 'stand' && obj.partSize) {
-        const geo = getStandGeometry(obj.partSize, settings.params.minGapMm, obj.widthMm)
+        const geo = getStandGeometry(obj.partSize, settings.params.minGapMm, obj.widthMm, obj.heightMm)
         result.push({
           obj,
           source: null,
@@ -92,7 +92,7 @@ export default function EditorApp() {
       if (!obj.sourceId) continue
       const source = getSource(obj.sourceId)
       if (!source) continue
-      const geo = getObjectGeometry(obj.sourceId, obj.widthMm, settings.params, obj.tabs ?? [])
+      const geo = getObjectGeometry(obj.sourceId, obj.widthMm, settings.params, obj.tabs ?? [], obj.rot)
       if (!geo) continue
       result.push({
         obj,
@@ -175,6 +175,7 @@ export default function EditorApp() {
           y: mm.y,
           rot: 0,
           widthMm: STAND_DEFS[standSize].widthMm,
+          heightMm: STAND_DEFS[standSize].heightMm,
         })
         return
       }

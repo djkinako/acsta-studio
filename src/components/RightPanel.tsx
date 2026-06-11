@@ -2,7 +2,8 @@ import { useProject } from '../stores/project'
 import { useUi } from '../stores/ui'
 import { useSettings } from '../stores/settings'
 import { getSource } from '../pipeline/sources'
-import { ATTACHMENT_DEFS, STAND_DEFS, standMinWidth } from '../parts/defs'
+import { INSERT_DEPTH_MM } from '../parts/defs'
+import { ATTACHMENT_DEFS, STAND_DEFS, TAB_DEFS, standMinHeight, standMinWidth, type PartSize } from '../parts/defs'
 import type { ObjectView, PairIndicator } from './EditorApp'
 import type { ViolationResult } from '../pipeline/violations'
 
@@ -225,6 +226,18 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                   updateObject(sel.obj.id, { widthMm: Math.max(minW, Math.min(300, w)) })
                 }}
               />
+              {sel.obj.type === 'stand' && sel.obj.partSize && (
+                <NumberField
+                  label="高さ（穴は固定）"
+                  value={Math.round((sel.obj.heightMm ?? STAND_DEFS[sel.obj.partSize].heightMm) * 10) / 10}
+                  step={1}
+                  suffix="mm"
+                  onChange={(h) => {
+                    const minH = standMinHeight(STAND_DEFS[sel.obj.partSize!])
+                    updateObject(sel.obj.id, { heightMm: Math.max(minH, Math.min(150, h)) })
+                  }}
+                />
+              )}
               <NumberField
                 label="回転"
                 value={Math.round(sel.obj.rot * 10) / 10}
@@ -256,9 +269,39 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                     <span style={{ fontSize: 11.5, fontWeight: 800, color: '#4e89a3', flex: 1 }}>
                       {ATTACHMENT_DEFS[tab.size].label}
                       {ATTACHMENT_DEFS[tab.size].kind === 'tab' && (
-                        <span style={{ fontWeight: 700 }}> ↔ 穴{tab.size} 対応</span>
+                        <span style={{ fontWeight: 700 }}> ↔ 穴{tab.size}</span>
                       )}
                     </span>
+                    {ATTACHMENT_DEFS[tab.size].kind === 'tab' && (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <input
+                          type="number"
+                          min={INSERT_DEPTH_MM + 2}
+                          max={100}
+                          step={1}
+                          value={tab.lengthMm ?? TAB_DEFS[tab.size as PartSize].heightMm}
+                          onChange={(e) => {
+                            const n = Number(e.target.value)
+                            if (!Number.isFinite(n)) return
+                            const lengthMm = Math.max(INSERT_DEPTH_MM + 2, Math.min(100, n))
+                            updateObject(sel.obj.id, {
+                              tabs: sel.obj.tabs!.map((tb, j) => (j === i ? { ...tb, lengthMm } : tb)),
+                            })
+                          }}
+                          style={{
+                            width: 44,
+                            padding: '3px 6px',
+                            borderRadius: 7,
+                            border: '1px solid #c8dde7',
+                            fontSize: 11,
+                            fontWeight: 700,
+                            color: '#4e89a3',
+                            fontFamily: "'M PLUS Rounded 1c', sans-serif",
+                          }}
+                        />
+                        <span style={{ fontSize: 9.5, color: '#4e89a3', fontWeight: 700 }}>mm長</span>
+                      </span>
+                    )}
                     <button
                       onClick={() =>
                         updateObject(sel.obj.id, {

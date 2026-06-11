@@ -6,6 +6,8 @@ export interface PlacedTab {
   size: AttachmentId
   /** 輪郭上の位置 t ∈ [0,1) */
   t: number
+  /** タブの長さ（mm）。省略時はパーツ定義のデフォルト */
+  lengthMm?: number
 }
 
 /** 配置済みオブジェクト。座標は中心基準のワールドmm */
@@ -22,8 +24,10 @@ export interface PlacedObject {
   y: number
   /** 回転（deg、時計回り） */
   rot: number
-  /** 配置幅（mm、不透明領域基準）。台座は定義寸法固定 */
+  /** 配置幅（mm、不透明領域基準）。台座は外形幅 */
   widthMm: number
+  /** 台座の外形高さ（mm、台座のみ。穴の寸法は固定） */
+  heightMm?: number
   /** 吸着済みタブ（画像のみ） */
   tabs?: PlacedTab[]
 }

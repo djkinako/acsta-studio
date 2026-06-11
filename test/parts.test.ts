@@ -103,10 +103,10 @@ describe('アクキーポッチと台座スケール', () => {
 
   it('台座は外形をスケールしても穴の寸法は固定', () => {
     const def = STAND_DEFS.M
-    const scaled = standRings(def, 90) // 60mm → 90mm に拡大
+    const scaled = standRings(def, 90) // 幅のみ 60mm → 90mm（高さ未指定は据え置き）
     const outerBox = bboxOf([scaled[0]])
     expect(outerBox.maxX - outerBox.minX).toBeCloseTo(90, 1)
-    expect(outerBox.maxY - outerBox.minY).toBeCloseTo(def.heightMm * 1.5, 1)
+    expect(outerBox.maxY - outerBox.minY).toBeCloseTo(def.heightMm, 1)
     const holeBox = bboxOf([scaled[1]])
     expect(holeBox.maxX - holeBox.minX).toBeCloseTo(def.holeWmm, 2)
     expect(holeBox.maxY - holeBox.minY).toBeCloseTo(def.holeHmm, 2)
@@ -114,5 +114,66 @@ describe('アクキーポッチと台座スケール', () => {
 
   it('standMinWidth は穴幅より大きい', () => {
     expect(standMinWidth(STAND_DEFS.S)).toBeGreaterThan(STAND_DEFS.S.holeWmm)
+  })
+})
+
+describe('垂直タブと長さ・かまぼこ穴修正（v0.9）', () => {
+  it('direction指定でタブが輪郭法線ではなく指定方向（垂直）に付く', () => {
+    // 斜め45°の辺を持つ三角形でも、direction=(0,1)ならタブは真下向き
+    const tri: Ring = [
+      { x: 0, y: 0 },
+      { x: 20, y: 0 },
+      { x: 10, y: 20 },
+    ]
+    const { polygons, direction } = attachmentPolygonsAt(tri, 0.5, 'M', {
+      direction: { x: 0, y: 1 },
+    })
+    expect(direction).toEqual({ x: 0, y: 1 })
+    // タブのbboxの向き: 幅10mm（x方向）× 長さ方向（y）になっている = 回転していない
+    const box = bboxOf(polygons)
+    expect(box.maxX - box.minX).toBeCloseTo(TAB_DEFS.M.widthMm, 5)
+  })
+
+  it('lengthMm 指定でタブが伸びる', () => {
+    const body = [squareCW(20)]
+    const short = attachmentPolygonsAt(body[0], 0.625, 'M', { direction: { x: 0, y: 1 } })
+    const long = attachmentPolygonsAt(body[0], 0.625, 'M', {
+      direction: { x: 0, y: 1 },
+      lengthMm: 30,
+    })
+    const shortBox = bboxOf(short.polygons)
+    const longBox = bboxOf(long.polygons)
+    expect(longBox.maxY - shortBox.maxY).toBeCloseTo(30 - TAB_DEFS.M.heightMm, 1)
+  })
+
+  it('ポッチの穴が真円のまま残る（かまぼこ化しない）', () => {
+    const rings = keyringRings(KEYRING_DEFS.K3)
+    // 首(neck)が穴に重なっていないこと
+    const hole = rings[2]
+    const neck = rings[1]
+    const holeBox = bboxOf([hole])
+    const neckBox = bboxOf([neck])
+    expect(neckBox.maxY).toBeLessThan(holeBox.minY)
+    // 本体と union しても穴の縦横比がほぼ1（真円）
+    const body = [squareCW(20)]
+    const { polygons } = attachmentPolygonsAt(body[0], 0.125, 'K3')
+    const merged = unionPolygons(body, polygons)
+    const holes = merged.filter((r) => signedArea(r) * signedArea(merged[0]) < 0)
+    expect(holes).toHaveLength(1)
+    const box = bboxOf([holes[0]])
+    const aspect = (box.maxX - box.minX) / (box.maxY - box.minY)
+    expect(aspect).toBeGreaterThan(0.95)
+    expect(aspect).toBeLessThan(1.05)
+  })
+
+  it('台座は縦横独立にスケールでき穴は固定', () => {
+    const def = STAND_DEFS.M
+    const rings = standRings(def, 100, 30)
+    const outerBox = bboxOf([rings[0]])
+    expect(outerBox.maxX - outerBox.minX).toBeCloseTo(100, 1)
+    expect(outerBox.maxY - outerBox.minY).toBeCloseTo(30, 1)
+    const holeBox = bboxOf([rings[1]])
+    expect(holeBox.maxX - holeBox.minX).toBeCloseTo(def.holeWmm, 2)
+    expect(holeBox.maxY - holeBox.minY).toBeCloseTo(def.holeHmm, 2)
   })
 })
