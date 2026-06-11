@@ -54,6 +54,176 @@ const ZOOM_MIN = 0.5
 const ZOOM_MAX = 40
 /** 100% = 96dpi 相当（1mm ≈ 3.78px） */
 const PX_PER_MM_100 = 96 / 25.4
+/** ルーラーの太さ（px） */
+const RULER = 22
+
+/** 上・左のmm定規（Canva風）。ズーム・パンに追従する */
+function Rulers({
+  view,
+  size,
+  paper,
+}: {
+  view: ViewState
+  size: { w: number; h: number }
+  paper: { w: number; h: number }
+}) {
+  // ラベル付き目盛りが画面上で56px以上空くような間隔を選ぶ
+  const candidates = [1, 2, 5, 10, 20, 50, 100]
+  const major = candidates.find((s) => s * view.pxPerMm >= 56) ?? 200
+  const minor = (major / 5) * view.pxPerMm >= 7 ? major / 5 : major
+
+  const mmToScreenX = (mm: number) => size.w / 2 + (mm - view.cx) * view.pxPerMm
+  const mmToScreenY = (mm: number) => size.h / 2 + (mm - view.cy) * view.pxPerMm
+
+  const buildTicks = (visibleStartMm: number, visibleEndMm: number) => {
+    const result: Array<{ mm: number; isMajor: boolean }> = []
+    const first = Math.floor(visibleStartMm / minor) * minor
+    for (let mm = first; mm <= visibleEndMm; mm += minor) {
+      const rounded = Math.round(mm * 1000) / 1000
+      result.push({ mm: rounded, isMajor: Math.abs(rounded % major) < 1e-6 })
+    }
+    return result
+  }
+
+  const hTicks = buildTicks(view.cx - size.w / 2 / view.pxPerMm, view.cx + size.w / 2 / view.pxPerMm)
+  const vTicks = buildTicks(view.cy - size.h / 2 / view.pxPerMm, view.cy + size.h / 2 / view.pxPerMm)
+
+  const rulerBg = 'rgba(255, 253, 248, 0.95)'
+  const tickColor = '#b5a78f'
+  const labelStyle: React.CSSProperties = {
+    fontSize: 8.5,
+    fill: '#8d7d66',
+    fontWeight: 700,
+    fontFamily: "'M PLUS Rounded 1c', sans-serif",
+  }
+
+  return (
+    <>
+      {/* 上ルーラー */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: RULER,
+          background: rulerBg,
+          borderBottom: '1px solid var(--border)',
+          zIndex: 6,
+          pointerEvents: 'none',
+        }}
+      >
+        <svg width={size.w} height={RULER} style={{ display: 'block' }}>
+          {/* 用紙の範囲をうっすら強調 */}
+          <rect
+            x={mmToScreenX(0)}
+            y={0}
+            width={paper.w * view.pxPerMm}
+            height={RULER}
+            fill="rgba(226,109,142,0.07)"
+          />
+          {hTicks.map((t) => {
+            const x = mmToScreenX(t.mm)
+            if (x < RULER - 4) return null
+            return (
+              <g key={t.mm}>
+                <line
+                  x1={x}
+                  y1={t.isMajor ? 11 : 16}
+                  x2={x}
+                  y2={RULER}
+                  stroke={tickColor}
+                  strokeWidth={1}
+                />
+                {t.isMajor && (
+                  <text x={x + 3} y={9.5} style={labelStyle}>
+                    {t.mm}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* 左ルーラー */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          width: RULER,
+          background: rulerBg,
+          borderRight: '1px solid var(--border)',
+          zIndex: 6,
+          pointerEvents: 'none',
+        }}
+      >
+        <svg width={RULER} height={size.h} style={{ display: 'block' }}>
+          <rect
+            x={0}
+            y={mmToScreenY(0)}
+            width={RULER}
+            height={paper.h * view.pxPerMm}
+            fill="rgba(226,109,142,0.07)"
+          />
+          {vTicks.map((t) => {
+            const y = mmToScreenY(t.mm)
+            if (y < RULER - 4) return null
+            return (
+              <g key={t.mm}>
+                <line
+                  x1={t.isMajor ? 11 : 16}
+                  y1={y}
+                  x2={RULER}
+                  y2={y}
+                  stroke={tickColor}
+                  strokeWidth={1}
+                />
+                {t.isMajor && (
+                  <text
+                    x={9}
+                    y={y - 3}
+                    style={labelStyle}
+                    transform={`rotate(-90 9 ${y - 3})`}
+                    textAnchor="start"
+                  >
+                    {t.mm}
+                  </text>
+                )}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* 左上コーナー */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: RULER,
+          height: RULER,
+          background: rulerBg,
+          borderRight: '1px solid var(--border)',
+          borderBottom: '1px solid var(--border)',
+          zIndex: 7,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: 8,
+          fontWeight: 800,
+          color: '#b5a78f',
+          pointerEvents: 'none',
+        }}
+      >
+        mm
+      </div>
+    </>
+  )
+}
 
 const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
   { views, violations, indicators, paper, marginRect, minGapMm },
@@ -300,12 +470,14 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
         touchAction: 'none',
       }}
     >
+      <Rulers view={view} size={size} paper={paper} />
+
       {/* 用紙情報チップ */}
       <div
         style={{
           position: 'absolute',
-          top: 12,
-          left: 14,
+          top: RULER + 10,
+          left: RULER + 12,
           background: 'rgba(255,253,248,0.92)',
           border: '1px solid var(--border)',
           borderRadius: 99,
@@ -370,8 +542,6 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
         {/* オブジェクト */}
         {views.map((v) => {
           const { obj, source, geo } = v
-          const w = obj.widthMm
-          const h = geo.heightMm
           const violating = violations.violatingIds.has(obj.id)
           const cutColor = violating ? 'var(--danger)' : 'var(--cut)'
           const sc = scaling?.id === obj.id ? scaling.factor : 1
@@ -404,15 +574,26 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
               {layerVisible.print && (
                 <image
                   href={source.url}
-                  x={-w / 2}
-                  y={-h / 2}
-                  width={w}
-                  height={h}
+                  x={geo.imageOffsetX}
+                  y={geo.imageOffsetY}
+                  width={geo.imageWidthMm}
+                  height={geo.imageHeightMm}
                   preserveAspectRatio="none"
                 />
               )}
               {!layerVisible.print && (
                 <path d={cutPath} fill="rgba(180,214,228,0.2)" stroke="none" />
+              )}
+              {layerVisible.white && v.whiteVisUrl && (
+                <image
+                  href={v.whiteVisUrl}
+                  x={geo.imageOffsetX}
+                  y={geo.imageOffsetY}
+                  width={geo.imageWidthMm}
+                  height={geo.imageHeightMm}
+                  preserveAspectRatio="none"
+                  style={{ pointerEvents: 'none' }}
+                />
               )}
             </g>
           )

@@ -124,6 +124,7 @@ export default function RightPanel({ views, violations, indicators }: Props) {
   const toggleLayer = useUi((s) => s.toggleLayer)
   const dpi = useSettings((s) => s.dpi)
   const layerNames = useSettings((s) => s.layerNames)
+  const whiteShrinkPx = useSettings((s) => s.params.whiteShrinkPx)
 
   const sel = views.find((v) => v.obj.id === selectedId)
   const nameOf = (id: string) =>
@@ -319,10 +320,26 @@ export default function RightPanel({ views, violations, indicators }: Props) {
             />
           }
           title="白版"
-          sub={`${layerNames.white} ・ Phase 3 で実装`}
-          on={false}
-          disabled
+          sub={`${layerNames.white} ・ -${whiteShrinkPx}px縮小`}
+          on={layerVisible.white}
+          onToggle={() => toggleLayer('white')}
         />
+        {layerVisible.white && (
+          <div
+            style={{
+              marginTop: 8,
+              padding: '8px 10px',
+              borderRadius: 9,
+              background: '#eaf5f9',
+              fontSize: 10.5,
+              color: '#4e89a3',
+              fontWeight: 700,
+              lineHeight: 1.5,
+            }}
+          >
+            白版は編集中だけ水色で表示。書き出し時は #000000 になるよ。
+          </div>
+        )}
       </div>
 
       {/* 間隔チェック */}

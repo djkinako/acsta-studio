@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { useProject } from '../stores/project'
 import { useSettings } from '../stores/settings'
 import { effectiveDpi } from '../geometry/units'
+import { trimWidthPx } from '../pipeline/sources'
 import type { ObjectView } from './EditorApp'
 
 interface Props {
@@ -117,7 +118,8 @@ export default function LeftPanel({ views, onAddFiles }: Props) {
             )}
 
             {views.map((v) => {
-              const eDpi = Math.round(effectiveDpi(v.source.widthPx, v.obj.widthMm))
+              // 実効DPIは透明余白を除いた不透明領域の幅で計算
+              const eDpi = Math.round(effectiveDpi(trimWidthPx(v.source), v.obj.widthMm))
               const lowDpi = eDpi < dpi
               const active = v.obj.id === selectedId
               return (

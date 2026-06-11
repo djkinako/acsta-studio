@@ -6,3 +6,4 @@ dist/
 public/sample.png
 .gstack/
 *.tsbuildinfo
+サンプル*

@@ -2,7 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useProject, newObjectId, type PlacedObject } from '../stores/project'
 import { useSettings, paperSizeOf } from '../stores/settings'
 import { useUi } from '../stores/ui'
-import { getObjectGeometry, getSource, importPng, type ObjectGeometry, type SourceImage } from '../pipeline/sources'
+import {
+  getObjectGeometry,
+  getSource,
+  getWhiteUrls,
+  importPng,
+  type ObjectGeometry,
+  type SourceImage,
+} from '../pipeline/sources'
 import { checkViolations, type ViolationResult } from '../pipeline/violations'
 import { transformRings, minDistanceBetween, type ClosestPair, type Rect } from '../geometry/transform'
 import type { Polygons } from '../geometry/types'
@@ -18,6 +25,8 @@ export interface ObjectView {
   geo: ObjectGeometry
   worldCutline: Polygons
   worldGap: Polygons
+  /** 白版の編集画面用URL（水色可視化） */
+  whiteVisUrl: string | null
 }
 
 export interface PairIndicator {
@@ -58,6 +67,7 @@ export default function EditorApp() {
         geo,
         worldCutline: transformRings(geo.cutline, obj.x, obj.y, obj.rot),
         worldGap: transformRings(geo.gapPoly, obj.x, obj.y, obj.rot),
+        whiteVisUrl: getWhiteUrls(obj.sourceId, settings.params.whiteShrinkPx)?.visUrl ?? null,
       })
     }
     return result
@@ -176,7 +186,10 @@ export default function EditorApp() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Header violationCount={violations.pairs.length + violations.marginIds.length} />
+      <Header
+        views={views}
+        violationCount={violations.pairs.length + violations.marginIds.length}
+      />
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         <LeftPanel views={views} onAddFiles={addImageFiles} />
         <CanvasView
