@@ -185,17 +185,19 @@ export default function Header({ views, violationCount }: Props) {
           justifyContent: 'center',
         }}
       >
+        {/* 歯車アイコン（放射線だと太陽＝テーマ切替に見えるため、歯付きギアで「設定」を明示） */}
         <svg
-          width="18"
-          height="18"
-          viewBox="0 0 20 20"
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
           fill="none"
           stroke="var(--text-mid)"
           strokeWidth="1.7"
+          strokeLinejoin="round"
           strokeLinecap="round"
         >
-          <circle cx="10" cy="10" r="2.6" />
-          <path d="M 10,2.6 L 10,4.8 M 10,15.2 L 10,17.4 M 2.6,10 L 4.8,10 M 15.2,10 L 17.4,10 M 4.8,4.8 L 6.3,6.3 M 13.7,13.7 L 15.2,15.2 M 15.2,4.8 L 13.7,6.3 M 6.3,13.7 L 4.8,15.2" />
+          <circle cx="12" cy="12" r="3.1" />
+          <path d="M 19.5,13.4 a 7.8,7.8 0 0 0 0,-2.8 l 2.1,-1.6 -1.9,-3.3 -2.5,0.9 a 7.7,7.7 0 0 0 -2.4,-1.4 L 14.4,2.6 h -3.8 l -0.4,2.6 a 7.7,7.7 0 0 0 -2.4,1.4 l -2.5,-0.9 -1.9,3.3 2.1,1.6 a 7.8,7.8 0 0 0 0,2.8 l -2.1,1.6 1.9,3.3 2.5,-0.9 a 7.7,7.7 0 0 0 2.4,1.4 l 0.4,2.6 h 3.8 l 0.4,-2.6 a 7.7,7.7 0 0 0 2.4,-1.4 l 2.5,0.9 1.9,-3.3 z" />
         </svg>
       </button>
 

@@ -81,17 +81,23 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: 'acsta-settings',
-      version: 1,
-      // 旧バージョンの保存データに新パラメータのデフォルトを補完
-      migrate: (persisted) => {
-        const s = persisted as Partial<SettingsState>
+      version: 2,
+      // 保存済みデータと現行デフォルトを常にディープマージする。
+      // バージョンアップでパラメータが増えても、古い保存データの params に
+      // 新キーが無くて undefined → クラッシュ、を構造的に防ぐ
+      // （2026-06-11 設定画面が開けなくなる事故の再発防止）
+      merge: (persisted, current) => {
+        const s = (persisted ?? {}) as Partial<SettingsState>
         return {
+          ...current,
           ...s,
-          params: { ...DEFAULT_PARAMS, ...(s.params ?? {}) },
-          cutColor: s.cutColor ?? '#00B4D8',
-          layerNames: s.layerNames ?? { print: 'print', cut: 'cut', white: 'white' },
-        } as SettingsState
+          customPaper: { ...current.customPaper, ...(s.customPaper ?? {}) },
+          margins: { ...current.margins, ...(s.margins ?? {}) },
+          params: { ...current.params, ...(s.params ?? {}) },
+          layerNames: { ...current.layerNames, ...(s.layerNames ?? {}) },
+        }
       },
+      migrate: (persisted) => persisted as SettingsState,
     },
   ),
 )
