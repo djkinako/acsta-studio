@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.local
+.DS_Store
+# テスト用サンプル画像（再配布権が不明な素材を含むためリポジトリ外）
+public/sample.png
+.gstack/
+*.tsbuildinfo

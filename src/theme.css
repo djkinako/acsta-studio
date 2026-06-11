@@ -1,0 +1,173 @@
+/* AcSta Studio デザイントークン（design/AcSta Studio.dc.html 準拠） */
+:root {
+  --bg: #f1e9dc;
+  --bg-panel: #faf5ec;
+  --bg-card: #ffffff;
+  --bg-header: #fffdf8;
+  --bg-chip: #f0e9db;
+  --accent: #e26d8e;
+  --accent-hover: #d55b7f;
+  --text: #4d4337;
+  --text-sub: #a89a85;
+  --text-mid: #7a6c58;
+  --danger: #e25555;
+  --danger-text: #c24e3a;
+  --danger-bg: #fbe9e5;
+  --cut: #00b4d8;
+  --white-vis: rgba(125, 205, 230, 0.45);
+  --border: #e9decb;
+  --border-card: #eadfce;
+  --border-input: #e5d9c4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.logo-font {
+  font-family: 'Zen Maru Gothic', sans-serif;
+  font-weight: 900;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.card-label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-sub);
+  letter-spacing: 0.06em;
+  margin-bottom: 10px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.slider-row label {
+  width: 124px;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.slider-row input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent);
+  min-width: 0;
+}
+
+.slider-row .val {
+  width: 64px;
+  text-align: right;
+  font-size: 12.5px;
+  font-weight: 800;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.toggle-row input {
+  accent-color: var(--accent);
+}
+
+.dropzone {
+  border: 2px dashed #d9c8ac;
+  background: #fffcf5;
+  border-radius: 14px;
+  padding: 18px 12px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #6b5d49;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dropzone:hover,
+.dropzone.drag-over {
+  border-color: var(--accent);
+  background: #fff8f4;
+}
+
+.dropzone .sub {
+  font-size: 11px;
+  color: var(--text-sub);
+  margin-top: 3px;
+  font-weight: 700;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stat-cell {
+  background: var(--bg-panel);
+  border-radius: 9px;
+  padding: 7px 10px;
+}
+
+.stat-cell .k {
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text-sub);
+}
+
+.stat-cell .v {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dpi-warn {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: var(--danger-bg);
+  color: var(--danger-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.dpi-ok {
+  margin-top: 8px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: #eaf3ec;
+  color: #4e8a5f;
+  font-size: 11px;
+  font-weight: 700;
+}

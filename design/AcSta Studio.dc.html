@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&amp;family=Zen+Maru+Gothic:wght@700;900&amp;display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; }
+  </style>
+</helmet>
+<div data-screen-label="メイン編集画面" style="height: 100vh; min-width: 1240px; display: flex; flex-direction: column; font-family: 'M PLUS Rounded 1c', sans-serif; background: #F1E9DC; color: #4D4337; overflow: hidden;">
+
+  <!-- ═══════════ ヘッダー ═══════════ -->
+  <div style="height: 58px; background: #FFFDF8; border-bottom: 1px solid #E9DECB; display: flex; align-items: center; padding: 0 16px; gap: 16px; flex-shrink: 0; position: relative; z-index: 30;">
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="width: 34px; height: 34px; border-radius: 10px; background: #E26D8E; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px rgba(226,109,142,0.35);">
+        <svg width="20" height="20" viewBox="0 0 20 20">
+          <circle cx="10" cy="7" r="4.6" fill="#FFFFFF"></circle>
+          <rect x="8.4" y="10.5" width="3.2" height="3.6" fill="#FFFFFF"></rect>
+          <path d="M 4.5,17 L 15.5,17 L 14.2,13.8 L 5.8,13.8 Z" fill="#FFFFFF" opacity="0.85"></path>
+        </svg>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 0px;">
+        <div style="font-family: 'Zen Maru Gothic', sans-serif; font-weight: 900; font-size: 17px; line-height: 1.1; letter-spacing: 0.02em;">AcSta <span style="color: #E26D8E;">Studio</span></div>
+        <div style="font-size: 10px; color: #A89A85; font-weight: 700; letter-spacing: 0.08em;">アクスタ入稿データメーカー</div>
+      </div>
+    </div>
+
+    <div style="width: 1px; height: 28px; background: #E9DECB;"></div>
+
+    <div style="display: flex; align-items: center; gap: 8px; min-width: 0;">
+      <div style="font-size: 13.5px; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: text; white-space: nowrap;" style-hover="background:#F6EFE2">きなこの新作アクスタ_夏コミ</div>
+      <div style="font-size: 11px; color: #A89A85; white-space: nowrap; display: flex; align-items: center; gap: 4px;">
+        <svg width="11" height="11" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="none" stroke="#8FBF9B" stroke-width="1.6"></circle><path d="M 3.6,6.2 L 5.3,7.8 L 8.4,4.4" fill="none" stroke="#8FBF9B" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        保存済み 12:04
+      </div>
+    </div>
+
+    <div style="flex: 1;"></div>
+
+    <div style="display: flex; align-items: center; gap: 10px;">
+      <button onClick="{{ openSettings }}" style="width: 36px; height: 36px; border-radius: 10px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center;" style-hover="background:#F6EFE2" title="設定">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="#7A6C58" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="10" cy="10" r="2.6"></circle>
+          <path d="M 10,2.6 L 10,4.8 M 10,15.2 L 10,17.4 M 2.6,10 L 4.8,10 M 15.2,10 L 17.4,10 M 4.8,4.8 L 6.3,6.3 M 13.7,13.7 L 15.2,15.2 M 15.2,4.8 L 13.7,6.3 M 6.3,13.7 L 4.8,15.2"></path>
+        </svg>
+      </button>
+      <button style="height: 36px; padding: 0 16px; border-radius: 10px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 13px; font-weight: 700; color: #4D4337; display: flex; align-items: center; gap: 6px;" style-hover="background:#F6EFE2">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#7A6C58" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M 12.5,14 L 3.5,14 C 2.7,14 2,13.3 2,12.5 L 2,3.5 C 2,2.7 2.7,2 3.5,2 L 10.5,2 L 14,5.5 L 14,12.5 C 14,13.3 13.3,14 12.5,14 Z"></path><path d="M 5,2 L 5,5.5 L 10,5.5 L 10,2"></path></svg>
+        保存
+      </button>
+      <div style="position: relative;">
+        <button onClick="{{ toggleExport }}" style="height: 36px; padding: 0 18px; border-radius: 10px; border: none; background: #E26D8E; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 13px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 7px; box-shadow: 0 2px 8px rgba(226,109,142,0.4);" style-hover="background:#D55B7F">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M 8,2 L 8,10 M 4.5,6.8 L 8,10.3 L 11.5,6.8"></path><path d="M 2.5,13.5 L 13.5,13.5"></path></svg>
+          書き出し
+        </button>
+        <sc-if value="{{ exportOpen }}" hint-placeholder-val="{{ false }}">
+          <div style="position: absolute; top: 44px; right: 0; width: 268px; background: #FFFFFF; border: 1px solid #E9DECB; border-radius: 14px; box-shadow: 0 10px 30px rgba(91,72,39,0.18); padding: 8px; z-index: 50;">
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer;" style-hover="background:#FBF3F5">
+              <div style="width: 34px; height: 34px; border-radius: 9px; background: #FBE3EA; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #C2557A;">PDF</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 700;">レイヤー付きPDF</div>
+                <div style="font-size: 11px; color: #A89A85;">print / cut / white の3層・推奨</div>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; cursor: pointer;" style-hover="background:#FBF3F5">
+              <div style="width: 34px; height: 34px; border-radius: 9px; background: #F0E9DB; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #7A6C58;">SVG</div>
+              <div>
+                <div style="font-size: 13px; font-weight: 700;">SVG + 変換スクリプト</div>
+                <div style="font-size: 11px; color: #A89A85;">Illustratorでレイヤー化する.jsx同梱</div>
+              </div>
+            </div>
+            <div style="margin: 6px 4px 4px; padding: 8px 10px; border-radius: 9px; background: #FBE9E5; display: flex; gap: 7px; align-items: flex-start;">
+              <span style="font-size: 12px; line-height: 1.3;">⚠️</span>
+              <div style="font-size: 11px; color: #B5503C; font-weight: 700; line-height: 1.45;">間隔違反が1件あります。このまま書き出すこともできます。</div>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ 本体3ペイン ═══════════ -->
+  <div style="flex: 1; display: flex; min-height: 0;">
+
+    <!-- ── 左パネル ── -->
+    <div style="width: 236px; flex-shrink: 0; background: #FAF5EC; border-right: 1px solid #E9DECB; display: flex; flex-direction: column; min-height: 0;">
+      <div style="display: flex; gap: 4px; margin: 12px 12px 10px; padding: 4px; background: #EFE6D5; border-radius: 12px;">
+        <div onClick="{{ setTabImages }}" style="{{ tabImgStyle }}">画像</div>
+        <div onClick="{{ setTabParts }}" style="{{ tabPartsStyle }}">パーツ</div>
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; padding: 0 12px 16px; display: flex; flex-direction: column; gap: 10px;">
+        <sc-if value="{{ imagesTabOn }}" hint-placeholder-val="{{ true }}">
+          <div style="border: 2px dashed #D9C8AC; background: #FFFCF5; border-radius: 14px; padding: 18px 12px; text-align: center; cursor: pointer;" style-hover="border-color:#E26D8E;background:#FFF8F4">
+            <svg width="30" height="30" viewBox="0 0 32 32" style="margin-bottom: 6px;">
+              <rect x="5" y="19" width="22" height="8" rx="2.5" fill="none" stroke="#C9B493" stroke-width="2"></rect>
+              <path d="M 16,5 L 16,17 M 11,12.5 L 16,17.5 L 21,12.5" fill="none" stroke="#E26D8E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <div style="font-size: 12.5px; font-weight: 800; color: #6B5D49;">透過PNGをここにドロップ</div>
+            <div style="font-size: 11px; color: #A89A85; margin-top: 3px;">またはクリックして選択</div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-top: 4px; padding-left: 2px;">配置済みの画像 ・ 3</div>
+
+          <div onClick="{{ pickBunny }}" style="{{ rowBunnyStyle }}" style-hover="background:#FFFFFF">
+            <div style="width: 40px; height: 40px; border-radius: 9px; background: #FFF6F8; border: 1px solid #F3DFE5; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="26" height="30" viewBox="-22 -46 44 90"><path d="{{ bunnyD }}" fill="#F8C9D4"></path></svg>
+            </div>
+            <div style="min-width: 0;">
+              <div style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">うさみみちゃん.png</div>
+              <div style="font-size: 10.5px; color: #A89A85;">38.0 × 75.5mm ・ 338dpi</div>
+            </div>
+          </div>
+          <div onClick="{{ pickHiyoko }}" style="{{ rowHiyokoStyle }}" style-hover="background:#FFFFFF">
+            <div style="width: 40px; height: 40px; border-radius: 9px; background: #FFFBEE; border: 1px solid #F2E7C8; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="26" height="26" viewBox="-20 -24 40 44"><path d="{{ hiyokoD }}" fill="#F7D87C"></path></svg>
+            </div>
+            <div style="min-width: 0;">
+              <div style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">ひよこ.png</div>
+              <div style="font-size: 10.5px; color: #A89A85;">33.4 × 36.0mm ・ 412dpi</div>
+            </div>
+          </div>
+          <div onClick="{{ pickKuma }}" style="{{ rowKumaStyle }}" style-hover="background:#FFFFFF">
+            <div style="width: 40px; height: 40px; border-radius: 9px; background: #FBF4EA; border: 1px solid #EBDcc6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+              <svg width="26" height="26" viewBox="-20 -21 40 41"><path d="{{ kumaD }}" fill="#D9A86C"></path></svg>
+            </div>
+            <div style="min-width: 0;">
+              <div style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">くまさん.png</div>
+              <div style="font-size: 10.5px; color: #C24E3A; font-weight: 700;">⚠ 実効286dpi（350未満）</div>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ partsTabOn }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; padding-left: 2px;">凸タブ（ポッチ）</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 4px 8px; text-align: center; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="26" height="18" viewBox="0 0 28 20"><path d="M 6,2 L 6,12 Q 6,18 12,18 L 16,18 Q 22,18 22,12 L 22,2" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></path></svg>
+              <div style="font-size: 11px; font-weight: 800; margin-top: 2px;">タブ S</div>
+              <div style="font-size: 9.5px; color: #A89A85;">8×5mm</div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 4px 8px; text-align: center; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="30" height="18" viewBox="0 0 32 20"><path d="M 5,2 L 5,12 Q 5,18 11,18 L 21,18 Q 27,18 27,12 L 27,2" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></path></svg>
+              <div style="font-size: 11px; font-weight: 800; margin-top: 2px;">タブ M</div>
+              <div style="font-size: 9.5px; color: #A89A85;">10×6mm</div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 4px 8px; text-align: center; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="34" height="18" viewBox="0 0 36 20"><path d="M 4,2 L 4,12 Q 4,18 10,18 L 26,18 Q 32,18 32,12 L 32,2" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></path></svg>
+              <div style="font-size: 11px; font-weight: 800; margin-top: 2px;">タブ L</div>
+              <div style="font-size: 9.5px; color: #A89A85;">12×7mm</div>
+            </div>
+          </div>
+
+          <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-top: 6px; padding-left: 2px;">台座</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="52" height="16" viewBox="0 0 56 18"><rect x="2" y="2" width="52" height="14" rx="4" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></rect><rect x="21" y="6.5" width="14" height="5" rx="1.5" fill="#FAF5EC" stroke="#7FAEC2" stroke-width="1.2"></rect></svg>
+              <div><div style="font-size: 11.5px; font-weight: 800;">台座 小 ・ 穴S</div><div style="font-size: 9.5px; color: #A89A85;">40×12mm</div></div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="62" height="18" viewBox="0 0 66 20"><rect x="2" y="2" width="62" height="16" rx="4.5" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></rect><rect x="24" y="7" width="18" height="6" rx="1.8" fill="#FAF5EC" stroke="#7FAEC2" stroke-width="1.2"></rect></svg>
+              <div><div style="font-size: 11.5px; font-weight: 800;">台座 中 ・ 穴M</div><div style="font-size: 9.5px; color: #A89A85;">60×16mm</div></div>
+            </div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 11px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; cursor: grab;" style-hover="border-color:#E26D8E">
+              <svg width="72" height="20" viewBox="0 0 76 22"><rect x="2" y="2" width="72" height="18" rx="5" fill="#D6E9F1" stroke="#7FAEC2" stroke-width="1.4"></rect><rect x="27" y="8" width="22" height="7" rx="2" fill="#FAF5EC" stroke="#7FAEC2" stroke-width="1.2"></rect></svg>
+              <div><div style="font-size: 11.5px; font-weight: 800;">台座 大 ・ 穴L</div><div style="font-size: 9.5px; color: #A89A85;">80×20mm</div></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 6px; padding: 10px 12px; border-radius: 11px; background: #FFF4E8; font-size: 11px; color: #9A6B35; font-weight: 700; line-height: 1.55;">
+            タブと台座の穴はサイズをそろえてね（タブM ↔ 穴M）。タブは本体にドラッグするとカットラインに合体するよ。
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- ── 中央キャンバス ── -->
+    <div style="flex: 1; min-width: 0; position: relative; overflow: auto; display: flex; align-items: center; justify-content: center; background-color: #EFE5D4; background-image: radial-gradient(rgba(141,116,77,0.16) 1px, transparent 1.3px); background-size: 22px 22px;">
+
+      <div style="position: absolute; top: 12px; left: 14px; background: rgba(255,253,248,0.92); border: 1px solid #E9DECB; border-radius: 99px; padding: 5px 14px; font-size: 11.5px; font-weight: 700; color: #7A6C58; display: flex; gap: 8px; align-items: center; z-index: 5; white-space: nowrap;">
+        <span>A4 ・ 縦</span><span style="color: #D5C6AC;">|</span><span>210 × 297mm</span><span style="color: #D5C6AC;">|</span><span>350dpi</span>
+      </div>
+
+      <div style="position: relative; box-shadow: 0 8px 32px rgba(91,72,39,0.22); border-radius: 2px; flex-shrink: 0; margin: 56px 0 24px;">
+        <svg width="472" height="668" viewBox="0 0 210 297" style="display: block; background: #FFFFFF; border-radius: 2px;">
+          <!-- マージン（配置可能エリア） -->
+          <rect x="5" y="5" width="200" height="287" fill="none" stroke="#C9B99F" stroke-width="0.45" stroke-dasharray="2.4 1.8"></rect>
+          <text x="8" y="10.6" style="font-size: 3.4px; fill: #B5A78F; font-weight: 700;">マージン 5mm</text>
+
+          <!-- ◆ うさみみちゃん（選択中・タブM合体済み） -->
+          <g onClick="{{ pickBunny }}" transform="translate(58,108)" style="cursor: pointer;">
+            <g display="{{ cutDisplay }}">
+              <path d="{{ bunnyD }}" fill="none" stroke="#00B4D8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ tabD }}" fill="none" stroke="#00B4D8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ bunnyD }}" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ tabD }}" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"></path>
+            </g>
+            <path d="{{ tabD }}" fill="rgba(180,214,228,0.45)" stroke="#8FB9CC" stroke-width="0.5"></path>
+            <g display="{{ printDisplay }}">
+              <path d="{{ bunnyD }}" fill="#F8C9D4"></path>
+              <ellipse cx="-7.2" cy="-37" rx="1.8" ry="4" fill="#FBDFE7" transform="rotate(14 -7.2 -37)"></ellipse>
+              <ellipse cx="7.2" cy="-37" rx="1.8" ry="4" fill="#FBDFE7" transform="rotate(-14 7.2 -37)"></ellipse>
+              <ellipse cx="0" cy="24" rx="9" ry="11" fill="#FDF0F4"></ellipse>
+              <circle cx="-6" cy="-11" r="1.7" fill="#5B4A3E"></circle>
+              <circle cx="6" cy="-11" r="1.7" fill="#5B4A3E"></circle>
+              <ellipse cx="-10.5" cy="-6" rx="2.6" ry="1.6" fill="#F2A0B5"></ellipse>
+              <ellipse cx="10.5" cy="-6" rx="2.6" ry="1.6" fill="#F2A0B5"></ellipse>
+              <path d="M -1.8,-6.5 Q 0,-4.8 1.8,-6.5" fill="none" stroke="#5B4A3E" stroke-width="0.8" stroke-linecap="round"></path>
+            </g>
+            <g display="{{ whiteDisplay }}">
+              <g transform="scale(0.94)">
+                <path d="{{ bunnyD }}" fill="rgba(125,205,230,0.45)"></path>
+              </g>
+            </g>
+            <g display="{{ cutDisplay }}">
+              <rect x="-10" y="50.5" width="20" height="5.4" rx="2.7" fill="#EAF5F9" stroke="#8FB9CC" stroke-width="0.35"></rect>
+              <text x="0" y="54.3" text-anchor="middle" style="font-size: 3.1px; fill: #4E89A3; font-weight: 800;">タブ M</text>
+            </g>
+          </g>
+
+          <!-- ◆ ひよこ（間隔違反ペアA） -->
+          <g onClick="{{ pickHiyoko }}" transform="translate(128,82) rotate(-8)" style="cursor: pointer;">
+            <g display="{{ cutDisplay }}">
+              <path d="{{ hiyokoD }}" fill="none" stroke="#E25555" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ hiyokoD }}" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"></path>
+            </g>
+            <g display="{{ printDisplay }}">
+              <path d="{{ hiyokoD }}" fill="#F7D87C"></path>
+              <path d="M -2,-0.5 L -6.5,1.8 L -2,3.8 Z" fill="#EFA73E"></path>
+              <circle cx="-7.5" cy="-3.5" r="1.5" fill="#5B4A3E"></circle>
+              <circle cx="2.5" cy="-3.5" r="1.5" fill="#5B4A3E"></circle>
+              <ellipse cx="7" cy="1.5" rx="2.4" ry="1.5" fill="#F4B0A0"></ellipse>
+              <path d="M 8,-14 Q 14,-10 9,-5.5 Q 14.5,-7 16,-11 Q 12,-15 8,-14 Z" fill="#F2CB60"></path>
+            </g>
+            <g display="{{ whiteDisplay }}">
+              <g transform="scale(0.93)">
+                <path d="{{ hiyokoD }}" fill="rgba(125,205,230,0.45)"></path>
+              </g>
+            </g>
+          </g>
+
+          <!-- ◆ くまさん（間隔違反ペアB・低dpi） -->
+          <g onClick="{{ pickKuma }}" transform="translate(155,121) rotate(6)" style="cursor: pointer;">
+            <g display="{{ cutDisplay }}">
+              <path d="{{ kumaD }}" fill="none" stroke="#E25555" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ kumaD }}" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"></path>
+            </g>
+            <g display="{{ printDisplay }}">
+              <path d="{{ kumaD }}" fill="#D9A86C"></path>
+              <circle cx="-11" cy="-12" r="2.6" fill="#C08D52"></circle>
+              <circle cx="11" cy="-12" r="2.6" fill="#C08D52"></circle>
+              <ellipse cx="0" cy="6.5" rx="6.5" ry="5" fill="#F4E3CC"></ellipse>
+              <ellipse cx="0" cy="4.6" rx="1.9" ry="1.4" fill="#5B4A3E"></ellipse>
+              <path d="M 0,6 L 0,8 M 0,8 Q -2,10 -3.4,8.6 M 0,8 Q 2,10 3.4,8.6" fill="none" stroke="#5B4A3E" stroke-width="0.7" stroke-linecap="round"></path>
+              <circle cx="-7" cy="-3" r="1.5" fill="#5B4A3E"></circle>
+              <circle cx="7" cy="-3" r="1.5" fill="#5B4A3E"></circle>
+            </g>
+            <g display="{{ whiteDisplay }}">
+              <g transform="scale(0.93)">
+                <path d="{{ kumaD }}" fill="rgba(125,205,230,0.45)"></path>
+              </g>
+            </g>
+          </g>
+
+          <!-- 違反インジケーター -->
+          <g display="{{ cutDisplay }}" style="pointer-events: none;">
+            <path d="M 136,97.5 L 143,104.5" stroke="#E25555" stroke-width="0.7" stroke-dasharray="1.4 1"></path>
+            <circle cx="136" cy="97.5" r="1" fill="#E25555"></circle>
+            <circle cx="143" cy="104.5" r="1" fill="#E25555"></circle>
+            <rect x="143" y="92.6" width="31" height="8" rx="4" fill="#E25555"></rect>
+            <text x="158.5" y="98" text-anchor="middle" style="font-size: 3.5px; fill: #FFFFFF; font-weight: 800;">2.1mm ＜ 4mm</text>
+          </g>
+
+          <!-- ◆ 台座（中）カットのみ -->
+          <g onClick="{{ pickDaiza }}" transform="translate(120,232)" style="cursor: pointer;">
+            <g display="{{ cutDisplay }}">
+              <path d="{{ daizaD }}" fill="none" stroke="#00B4D8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"></path>
+              <path d="{{ daizaD }}" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"></path>
+            </g>
+            <path d="{{ daizaD }}" fill="rgba(180,214,228,0.45)"></path>
+            <g display="{{ cutDisplay }}">
+              <rect x="-9" y="-3.2" width="18" height="6.4" rx="1.8" fill="#FFFFFF" stroke="#00B4D8" stroke-width="0.5"></rect>
+              <text x="0" y="13.5" text-anchor="middle" style="font-size: 3.2px; fill: #4E89A3; font-weight: 800;">台座（中）・ 穴M</text>
+            </g>
+          </g>
+
+          {{ selectionOverlay }}
+        </svg>
+      </div>
+    </div>
+
+    <!-- ── 右パネル ── -->
+    <div style="width: 270px; flex-shrink: 0; background: #FAF5EC; border-left: 1px solid #E9DECB; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+
+      <!-- 選択中オブジェクト -->
+      <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 14px; padding: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+          <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em;">選択中のオブジェクト</div>
+          <div style="{{ selTypeChipStyle }}">{{ selType }}</div>
+        </div>
+        <div style="font-size: 13.5px; font-weight: 800; margin-bottom: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ selName }}</div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div style="background: #FAF5EC; border-radius: 9px; padding: 7px 10px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #A89A85;">X 位置</div>
+            <div style="font-size: 13px; font-weight: 700;">{{ selX }} <span style="font-size: 10px; color: #A89A85;">mm</span></div>
+          </div>
+          <div style="background: #FAF5EC; border-radius: 9px; padding: 7px 10px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #A89A85;">Y 位置</div>
+            <div style="font-size: 13px; font-weight: 700;">{{ selY }} <span style="font-size: 10px; color: #A89A85;">mm</span></div>
+          </div>
+          <div style="background: #FAF5EC; border-radius: 9px; padding: 7px 10px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #A89A85;">サイズ</div>
+            <div style="font-size: 13px; font-weight: 700;">{{ selSize }}</div>
+          </div>
+          <div style="background: #FAF5EC; border-radius: 9px; padding: 7px 10px;">
+            <div style="font-size: 9.5px; font-weight: 800; color: #A89A85;">回転</div>
+            <div style="font-size: 13px; font-weight: 700;">{{ selRot }}°</div>
+          </div>
+        </div>
+
+        <div style="{{ dpiChipStyle }}">{{ dpiText }}</div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button style="flex: 1; height: 30px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 11.5px; font-weight: 700; color: #6B5D49;" style-hover="background:#F6EFE2">複製 ⌘D</button>
+          <button style="flex: 1; height: 30px; border-radius: 8px; border: 1px solid #F0D5CD; background: #FFFFFF; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 11.5px; font-weight: 700; color: #C24E3A;" style-hover="background:#FBE9E5">削除</button>
+        </div>
+      </div>
+
+      <!-- レイヤー -->
+      <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 14px; padding: 14px;">
+        <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-bottom: 10px;">レイヤー</div>
+
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="{{ layerRowPrintStyle }}">
+            <div style="width: 16px; height: 16px; border-radius: 5px; background: linear-gradient(135deg, #F8C9D4 0%, #F7D87C 55%, #D9A86C 100%); border: 1px solid rgba(91,72,39,0.15); flex-shrink: 0;"></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12px; font-weight: 800;">カラー版</div>
+              <div style="font-size: 10px; color: #A89A85; font-family: monospace;">print ・ ラスター350dpi</div>
+            </div>
+            <div onClick="{{ togglePrint }}" style="{{ switchPrintStyle }}"><div style="{{ knobPrintStyle }}"></div></div>
+          </div>
+
+          <div style="{{ layerRowCutStyle }}">
+            <div style="width: 16px; height: 16px; border-radius: 5px; background: #FFFFFF; border: 2px solid #00B4D8; flex-shrink: 0; box-sizing: border-box;"></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12px; font-weight: 800;">カットライン</div>
+              <div style="font-size: 10px; color: #A89A85; font-family: monospace;">cut ・ ベクター 0.1mm</div>
+            </div>
+            <div onClick="{{ toggleCut }}" style="{{ switchCutStyle }}"><div style="{{ knobCutStyle }}"></div></div>
+          </div>
+
+          <div style="{{ layerRowWhiteStyle }}">
+            <div style="width: 16px; height: 16px; border-radius: 5px; background: rgba(125,205,230,0.55); border: 1px solid #8FB9CC; flex-shrink: 0;"></div>
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-size: 12px; font-weight: 800;">白版</div>
+              <div style="font-size: 10px; color: #A89A85; font-family: monospace;">white ・ -2px縮小</div>
+            </div>
+            <div onClick="{{ toggleWhite }}" style="{{ switchWhiteStyle }}"><div style="{{ knobWhiteStyle }}"></div></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; padding: 8px 10px; border-radius: 9px; background: #EAF5F9; font-size: 10.5px; color: #4E89A3; font-weight: 700; line-height: 1.5;">
+          白版は編集中だけ水色で表示。書き出し時は #000000 になるよ。
+        </div>
+      </div>
+
+      <!-- 間隔チェック -->
+      <div style="background: #FFFFFF; border: 1px solid #F0D5CD; border-radius: 14px; padding: 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+          <div style="font-size: 11px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em;">間隔チェック</div>
+          <div style="background: #FBE9E5; color: #C24E3A; font-size: 10.5px; font-weight: 800; padding: 3px 9px; border-radius: 99px;">違反 1件</div>
+        </div>
+        <div style="display: flex; align-items: flex-start; gap: 8px; padding: 9px 10px; border-radius: 10px; background: #FFF5F3;">
+          <div style="width: 8px; height: 8px; border-radius: 99px; background: #E25555; margin-top: 4px; flex-shrink: 0;"></div>
+          <div>
+            <div style="font-size: 11.5px; font-weight: 800; color: #B5503C;">ひよこ.png ↔ くまさん.png</div>
+            <div style="font-size: 10.5px; color: #C97A6B; margin-top: 1px;">2.1mm（最小 4.0mm）— ドラッグで離すと解消</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ フッター ═══════════ -->
+  <div style="height: 34px; background: #FFFDF8; border-top: 1px solid #E9DECB; display: flex; align-items: center; padding: 0 14px; gap: 14px; flex-shrink: 0; font-size: 11.5px; font-weight: 700; color: #7A6C58;">
+    <div style="display: flex; align-items: center; gap: 6px;">
+      <button style="width: 22px; height: 22px; border-radius: 6px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; font-size: 13px; line-height: 1; color: #7A6C58; padding: 0;" style-hover="background:#F6EFE2">−</button>
+      <span style="min-width: 38px; text-align: center;">100%</span>
+      <button style="width: 22px; height: 22px; border-radius: 6px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; font-size: 13px; line-height: 1; color: #7A6C58; padding: 0;" style-hover="background:#F6EFE2">＋</button>
+      <span style="color: #C9B99F; margin: 0 2px;">|</span>
+      <span style="cursor: pointer;" style-hover="color:#E26D8E">フィット</span>
+    </div>
+    <div style="flex: 1;"></div>
+    <div style="font-variant-numeric: tabular-nums; color: #A89A85;">X 102.4mm ／ Y 188.0mm</div>
+    <div style="width: 1px; height: 16px; background: #E9DECB;"></div>
+    <div style="display: flex; align-items: center; gap: 5px; color: #C24E3A;">
+      <div style="width: 7px; height: 7px; border-radius: 99px; background: #E25555;"></div>
+      間隔違反 1件
+    </div>
+    <div style="width: 1px; height: 16px; background: #E9DECB;"></div>
+    <div style="color: #A89A85;">オブジェクト 4</div>
+  </div>
+
+  <!-- ═══════════ 設定モーダル ═══════════ -->
+  <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+    <div data-screen-label="設定モーダル" onClick="{{ closeSettings }}" style="position: fixed; inset: 0; background: rgba(77,67,55,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;">
+      <div onClick="{{ stopProp }}" style="width: 660px; max-height: 84vh; background: #FFFDF8; border-radius: 20px; box-shadow: 0 24px 60px rgba(60,45,25,0.35); display: flex; flex-direction: column; overflow: hidden;">
+        <div style="padding: 18px 22px 14px; border-bottom: 1px solid #EFE6D5; display: flex; align-items: center; justify-content: space-between;">
+          <div style="font-family: 'Zen Maru Gothic', sans-serif; font-size: 17px; font-weight: 900;">設定</div>
+          <button onClick="{{ closeSettings }}" style="width: 30px; height: 30px; border-radius: 8px; border: none; background: #F0E9DB; cursor: pointer; font-size: 14px; color: #7A6C58; font-weight: 700;" style-hover="background:#E5DACA">✕</button>
+        </div>
+
+        <div style="flex: 1; overflow-y: auto; padding: 18px 22px; display: flex; flex-direction: column; gap: 18px;">
+
+          <!-- プリセット -->
+          <div>
+            <div style="font-size: 11.5px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-bottom: 8px;">プリセット</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div onClick="{{ setPresetA }}" style="{{ presetAStyle }}">いつもの入稿先A</div>
+              <div onClick="{{ setPresetB }}" style="{{ presetBStyle }}">入稿先B（白版なし）</div>
+              <div style="padding: 7px 14px; border-radius: 99px; border: 1.5px dashed #D9C8AC; font-size: 12px; font-weight: 700; color: #A89A85; cursor: pointer;" style-hover="border-color:#E26D8E;color:#E26D8E">＋ 現在の設定を保存</div>
+            </div>
+          </div>
+
+          <!-- 用紙 -->
+          <div>
+            <div style="font-size: 11.5px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-bottom: 8px;">用紙とキャンバス</div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 13px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 110px; font-size: 12.5px; font-weight: 700;">用紙サイズ</div>
+                <div style="flex: 1; display: flex; gap: 6px;">
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #4D4337; color: #FFFDF8; font-size: 12px; font-weight: 800; cursor: pointer;">A4</div>
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #F0E9DB; color: #7A6C58; font-size: 12px; font-weight: 700; cursor: pointer;" style-hover="background:#E5DACA">A5</div>
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #F0E9DB; color: #7A6C58; font-size: 12px; font-weight: 700; cursor: pointer;" style-hover="background:#E5DACA">B4</div>
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #F0E9DB; color: #7A6C58; font-size: 12px; font-weight: 700; cursor: pointer;" style-hover="background:#E5DACA">B5</div>
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #F0E9DB; color: #7A6C58; font-size: 12px; font-weight: 700; cursor: pointer;" style-hover="background:#E5DACA">カスタム</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 110px; font-size: 12.5px; font-weight: 700;">向き</div>
+                <div style="display: flex; gap: 6px;">
+                  <div onClick="{{ setOrientTate }}" style="{{ orientTateStyle }}">縦</div>
+                  <div onClick="{{ setOrientYoko }}" style="{{ orientYokoStyle }}">横</div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 110px; font-size: 12.5px; font-weight: 700;">マージン</div>
+                <div style="display: flex; gap: 8px; align-items: center; font-size: 11px; color: #A89A85; font-weight: 700;">
+                  <span>上</span><div style="width: 52px; padding: 5px 8px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12px; font-weight: 700; color: #4D4337;">5.0</div>
+                  <span>下</span><div style="width: 52px; padding: 5px 8px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12px; font-weight: 700; color: #4D4337;">5.0</div>
+                  <span>左</span><div style="width: 52px; padding: 5px 8px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12px; font-weight: 700; color: #4D4337;">5.0</div>
+                  <span>右</span><div style="width: 52px; padding: 5px 8px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12px; font-weight: 700; color: #4D4337;">5.0</div>
+                  <span>mm</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 110px; font-size: 12.5px; font-weight: 700;">解像度（DPI）</div>
+                <div style="display: flex; gap: 6px;">
+                  <div onClick="{{ setDpi300 }}" style="{{ dpi300Style }}">300</div>
+                  <div onClick="{{ setDpi350 }}" style="{{ dpi350Style }}">350</div>
+                  <div onClick="{{ setDpi400 }}" style="{{ dpi400Style }}">400</div>
+                  <div style="padding: 6px 13px; border-radius: 9px; background: #F0E9DB; color: #7A6C58; font-size: 12px; font-weight: 700; cursor: pointer;" style-hover="background:#E5DACA">カスタム…</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 生成パラメータ -->
+          <div>
+            <div style="font-size: 11.5px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-bottom: 8px;">カットライン・白版の生成</div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 13px; padding: 14px; display: flex; flex-direction: column; gap: 14px;">
+
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 150px; font-size: 12.5px; font-weight: 700;">カットラインオフセット</div>
+                <div style="flex: 1; height: 6px; border-radius: 99px; background: #F0E9DB; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 14%; border-radius: 99px; background: #E26D8E;"></div>
+                  <div style="position: absolute; left: 14%; top: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; border-radius: 99px; background: #FFFFFF; border: 2.5px solid #E26D8E; box-shadow: 0 1px 4px rgba(91,72,39,0.2); cursor: grab;"></div>
+                </div>
+                <div style="width: 64px; text-align: right; font-size: 12.5px; font-weight: 800;">0.5 mm</div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 150px; font-size: 12.5px; font-weight: 700;">角の丸め半径</div>
+                <div style="flex: 1; height: 6px; border-radius: 99px; background: #F0E9DB; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 21%; border-radius: 99px; background: #E26D8E;"></div>
+                  <div style="position: absolute; left: 21%; top: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; border-radius: 99px; background: #FFFFFF; border: 2.5px solid #E26D8E; box-shadow: 0 1px 4px rgba(91,72,39,0.2); cursor: grab;"></div>
+                </div>
+                <div style="width: 64px; text-align: right; font-size: 12.5px; font-weight: 800;">0.5 mm</div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 150px; font-size: 12.5px; font-weight: 700;">オブジェクト最小間隔</div>
+                <div style="flex: 1; height: 6px; border-radius: 99px; background: #F0E9DB; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 25%; border-radius: 99px; background: #E26D8E;"></div>
+                  <div style="position: absolute; left: 25%; top: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; border-radius: 99px; background: #FFFFFF; border: 2.5px solid #E26D8E; box-shadow: 0 1px 4px rgba(91,72,39,0.2); cursor: grab;"></div>
+                </div>
+                <div style="width: 64px; text-align: right; font-size: 12.5px; font-weight: 800;">4.0 mm</div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 150px; font-size: 12.5px; font-weight: 700;">白版の縮小量</div>
+                <div style="flex: 1; height: 6px; border-radius: 99px; background: #F0E9DB; position: relative;">
+                  <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 20%; border-radius: 99px; background: #E26D8E;"></div>
+                  <div style="position: absolute; left: 20%; top: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; border-radius: 99px; background: #FFFFFF; border: 2.5px solid #E26D8E; box-shadow: 0 1px 4px rgba(91,72,39,0.2); cursor: grab;"></div>
+                </div>
+                <div style="width: 64px; text-align: right; font-size: 12.5px; font-weight: 800;">2 px</div>
+              </div>
+
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 150px; font-size: 12.5px; font-weight: 700;">輪郭の穴の扱い</div>
+                <div style="display: flex; gap: 6px;">
+                  <div onClick="{{ setHolesOuter }}" style="{{ holesOuterStyle }}">外周のみ</div>
+                  <div onClick="{{ setHolesBoth }}" style="{{ holesBothStyle }}">穴も含む</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- レイヤー名 -->
+          <div>
+            <div style="font-size: 11.5px; font-weight: 800; color: #A89A85; letter-spacing: 0.06em; margin-bottom: 8px;">書き出しレイヤー名（入稿先の指定に合わせてね）</div>
+            <div style="background: #FFFFFF; border: 1px solid #EADFCE; border-radius: 13px; padding: 14px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+              <div>
+                <div style="font-size: 10.5px; font-weight: 800; color: #A89A85; margin-bottom: 4px;">カラー版</div>
+                <div style="padding: 7px 10px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12.5px; font-weight: 700; font-family: monospace;">print</div>
+              </div>
+              <div>
+                <div style="font-size: 10.5px; font-weight: 800; color: #A89A85; margin-bottom: 4px;">カットライン</div>
+                <div style="padding: 7px 10px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12.5px; font-weight: 700; font-family: monospace;">cut</div>
+              </div>
+              <div>
+                <div style="font-size: 10.5px; font-weight: 800; color: #A89A85; margin-bottom: 4px;">白版</div>
+                <div style="padding: 7px 10px; border-radius: 8px; border: 1px solid #E5D9C4; background: #FFFFFF; font-size: 12.5px; font-weight: 700; font-family: monospace;">white</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="padding: 14px 22px; border-top: 1px solid #EFE6D5; display: flex; justify-content: flex-end; gap: 10px;">
+          <button onClick="{{ closeSettings }}" style="height: 36px; padding: 0 18px; border-radius: 10px; border: 1px solid #E5D9C4; background: #FFFFFF; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 13px; font-weight: 700; color: #6B5D49;" style-hover="background:#F6EFE2">閉じる</button>
+          <button onClick="{{ closeSettings }}" style="height: 36px; padding: 0 20px; border-radius: 10px; border: none; background: #E26D8E; cursor: pointer; font-family: 'M PLUS Rounded 1c', sans-serif; font-size: 13px; font-weight: 800; color: #FFFFFF; box-shadow: 0 2px 8px rgba(226,109,142,0.4);" style-hover="background:#D55B7F">保存して適用</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    tab: 'images',
+    sel: 'bunny',
+    print: true,
+    cut: true,
+    white: true,
+    settingsOpen: false,
+    exportOpen: false,
+    dpi: '350',
+    orient: 'tate',
+    holes: 'outer',
+    preset: 'A',
+  };
+
+  OBJS = {
+    bunny:  { name: 'うさみみちゃん.png', type: '画像',  x: '58.0',  y: '108.0', size: '38.0 × 75.5mm', rot: '0',  dpi: '実効 338dpi ・ きれいに印刷できるよ', ok: true,
+              tx: 58, ty: 108, trot: 0, bx: -24, by: -48, bw: 48, bh: 106 },
+    hiyoko: { name: 'ひよこ.png', type: '画像', x: '128.0', y: '82.0', size: '33.4 × 36.0mm', rot: '-8', dpi: '実効 412dpi ・ きれいに印刷できるよ', ok: true,
+              tx: 128, ty: 82, trot: -8, bx: -20, by: -25, bw: 40, bh: 46 },
+    kuma:   { name: 'くまさん.png', type: '画像', x: '155.0', y: '121.0', size: '35.8 × 34.6mm', rot: '6', dpi: '実効 286dpi ・ 設定350dpiより低め', ok: false,
+              tx: 155, ty: 121, trot: 6, bx: -21, by: -21, bw: 42, bh: 42 },
+    daiza:  { name: '台座（中）・穴M', type: 'パーツ', x: '120.0', y: '232.0', size: '60.0 × 16.0mm', rot: '0', dpi: 'カットラインのみ（印刷なし）', ok: null,
+              tx: 120, ty: 232, trot: 0, bx: -34, by: -12, bw: 68, bh: 24 },
+  };
+
+  seg(on) {
+    return 'padding:6px 13px;border-radius:9px;font-size:12px;cursor:pointer;transition:all .15s;' +
+      (on ? 'background:#4D4337;color:#FFFDF8;font-weight:800;'
+          : 'background:#F0E9DB;color:#7A6C58;font-weight:700;');
+  }
+
+  sw(on) {
+    return 'width:34px;height:20px;border-radius:99px;cursor:pointer;flex-shrink:0;transition:background .15s;position:relative;' +
+      (on ? 'background:#E26D8E;' : 'background:#D9CDB9;');
+  }
+
+  knob(on) {
+    return 'position:absolute;top:2px;width:16px;height:16px;border-radius:99px;background:#FFFFFF;box-shadow:0 1px 3px rgba(0,0,0,0.25);transition:left .15s;' +
+      (on ? 'left:16px;' : 'left:2px;');
+  }
+
+  row(on) {
+    return 'display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:10px;transition:opacity .15s;' +
+      (on ? '' : 'opacity:0.45;');
+  }
+
+  imgRow(sel) {
+    return 'display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:11px;cursor:pointer;transition:all .12s;' +
+      (sel ? 'background:#FFFFFF;box-shadow:0 1px 5px rgba(91,72,39,0.12);outline:1.5px solid #E26D8E;'
+           : 'background:transparent;');
+  }
+
+  renderVals() {
+    const s = this.state;
+    const o = this.OBJS[s.sel];
+
+    // 選択枠オーバーレイ
+    const e = React.createElement;
+    const handles = [
+      [o.bx, o.by], [o.bx + o.bw, o.by], [o.bx, o.by + o.bh], [o.bx + o.bw, o.by + o.bh],
+    ].map((p, i) => e('rect', {
+      key: 'h' + i, x: p[0] - 1.6, y: p[1] - 1.6, width: 3.2, height: 3.2, rx: 0.8,
+      fill: '#FFFFFF', stroke: '#E26D8E', strokeWidth: 0.55,
+    }));
+    const selectionOverlay = e('g', {
+      transform: 'translate(' + o.tx + ',' + o.ty + ') rotate(' + o.trot + ')',
+      style: { pointerEvents: 'none' },
+    },
+      e('rect', { x: o.bx, y: o.by, width: o.bw, height: o.bh, rx: 1.5, fill: 'none', stroke: '#E26D8E', strokeWidth: 0.55, strokeDasharray: '2.6 1.8' }),
+      handles,
+      e('line', { x1: 0, y1: o.by, x2: 0, y2: o.by - 6.5, stroke: '#E26D8E', strokeWidth: 0.55 }),
+      e('circle', { cx: 0, cy: o.by - 8.2, r: 1.9, fill: '#FFFFFF', stroke: '#E26D8E', strokeWidth: 0.55 })
+    );
+
+    const dpiChipBase = 'margin-top:10px;padding:7px 11px;border-radius:9px;font-size:11px;font-weight:800;';
+    let dpiChipStyle;
+    if (o.ok === true) dpiChipStyle = dpiChipBase + 'background:#E4F3E7;color:#3E7C50;';
+    else if (o.ok === false) dpiChipStyle = dpiChipBase + 'background:#FBE9E5;color:#C24E3A;';
+    else dpiChipStyle = dpiChipBase + 'background:#EAF5F9;color:#4E89A3;';
+
+    const tabBase = 'flex:1;text-align:center;padding:8px 0;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;transition:all .15s;';
+
+    return {
+      // パス（プレースホルダーキャラ）
+      bunnyD: 'M -7.5,-26.5 C -14,-23 -19,-16 -19,-9 C -19,1 -11,8.5 -1.5,9 C -8,12 -13,19 -13,26 C -13,35 -6,40 0,40 C 6,40 13,35 13,26 C 13,19 8,12 1.5,9 C 11,8.5 19,1 19,-9 C 19,-16 14,-23 7.5,-26.5 C 9,-29 10.5,-32 11,-35 C 12,-42 6,-44 4,-37.5 C 3.5,-35.5 3,-33 3,-31 C 1,-31.5 -1,-31.5 -3,-31 C -3,-33 -3.5,-35.5 -4,-37.5 C -6,-44 -12,-42 -11,-35 C -10.5,-32 -9,-29 -7.5,-26.5 Z',
+      tabD: 'M -7,38 L -7,46 Q -7,50 -3,50 L 3,50 Q 7,50 7,46 L 7,38 Z',
+      hiyokoD: 'M 0,-16 C 9,-16 16,-9 16,0 C 16,10 9,16 0,16 C -9,16 -16,10 -16,0 C -16,-9 -9,-16 0,-16 Z',
+      kumaD: 'M -14.5,-7 C -18,-8 -19,-12 -16.5,-15 C -14,-18 -9.5,-17.5 -8,-14.5 C -5.5,-15.8 -2.8,-16.5 0,-16.5 C 2.8,-16.5 5.5,-15.8 8,-14.5 C 9.5,-17.5 14,-18 16.5,-15 C 19,-12 18,-8 14.5,-7 C 15.8,-4.8 16.5,-2 16.5,0 C 16.5,9 9,16.5 0,16.5 C -9,16.5 -16.5,9 -16.5,0 C -16.5,-2 -15.8,-4.8 -14.5,-7 Z',
+      daizaD: 'M -26,-8 L 26,-8 Q 30,-8 30,-4 L 30,4 Q 30,8 26,8 L -26,8 Q -30,8 -30,4 L -30,-4 Q -30,-8 -26,-8 Z',
+
+      // タブ
+      tabImgStyle: tabBase + (s.tab === 'images' ? 'background:#FFFFFF;color:#4D4337;box-shadow:0 1px 4px rgba(91,72,39,0.14);' : 'background:transparent;color:#8A7D6C;'),
+      tabPartsStyle: tabBase + (s.tab === 'parts' ? 'background:#FFFFFF;color:#4D4337;box-shadow:0 1px 4px rgba(91,72,39,0.14);' : 'background:transparent;color:#8A7D6C;'),
+      imagesTabOn: s.tab === 'images',
+      partsTabOn: s.tab === 'parts',
+      setTabImages: () => this.setState({ tab: 'images' }),
+      setTabParts: () => this.setState({ tab: 'parts' }),
+
+      // 画像リスト
+      rowBunnyStyle: this.imgRow(s.sel === 'bunny'),
+      rowHiyokoStyle: this.imgRow(s.sel === 'hiyoko'),
+      rowKumaStyle: this.imgRow(s.sel === 'kuma'),
+
+      // 選択
+      pickBunny: () => this.setState({ sel: 'bunny' }),
+      pickHiyoko: () => this.setState({ sel: 'hiyoko' }),
+      pickKuma: () => this.setState({ sel: 'kuma' }),
+      pickDaiza: () => this.setState({ sel: 'daiza' }),
+      selectionOverlay,
+      selName: o.name,
+      selType: o.type,
+      selTypeChipStyle: 'font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;' +
+        (o.type === '画像' ? 'background:#FBE3EA;color:#C2557A;' : 'background:#EAF5F9;color:#4E89A3;'),
+      selX: o.x, selY: o.y, selSize: o.size, selRot: o.rot,
+      dpiText: o.dpi,
+      dpiChipStyle,
+
+      // レイヤー
+      printDisplay: s.print ? 'inline' : 'none',
+      cutDisplay: s.cut ? 'inline' : 'none',
+      whiteDisplay: s.white ? 'inline' : 'none',
+      togglePrint: () => this.setState({ print: !s.print }),
+      toggleCut: () => this.setState({ cut: !s.cut }),
+      toggleWhite: () => this.setState({ white: !s.white }),
+      switchPrintStyle: this.sw(s.print), knobPrintStyle: this.knob(s.print), layerRowPrintStyle: this.row(s.print),
+      switchCutStyle: this.sw(s.cut), knobCutStyle: this.knob(s.cut), layerRowCutStyle: this.row(s.cut),
+      switchWhiteStyle: this.sw(s.white), knobWhiteStyle: this.knob(s.white), layerRowWhiteStyle: this.row(s.white),
+
+      // モーダル・ドロップダウン
+      settingsOpen: s.settingsOpen,
+      openSettings: () => this.setState({ settingsOpen: true, exportOpen: false }),
+      closeSettings: () => this.setState({ settingsOpen: false }),
+      exportOpen: s.exportOpen,
+      toggleExport: () => this.setState({ exportOpen: !s.exportOpen }),
+      stopProp: (ev) => ev.stopPropagation(),
+
+      // 設定セグメント
+      dpi300Style: this.seg(s.dpi === '300'),
+      dpi350Style: this.seg(s.dpi === '350'),
+      dpi400Style: this.seg(s.dpi === '400'),
+      setDpi300: () => this.setState({ dpi: '300' }),
+      setDpi350: () => this.setState({ dpi: '350' }),
+      setDpi400: () => this.setState({ dpi: '400' }),
+      orientTateStyle: this.seg(s.orient === 'tate'),
+      orientYokoStyle: this.seg(s.orient === 'yoko'),
+      setOrientTate: () => this.setState({ orient: 'tate' }),
+      setOrientYoko: () => this.setState({ orient: 'yoko' }),
+      holesOuterStyle: this.seg(s.holes === 'outer'),
+      holesBothStyle: this.seg(s.holes === 'both'),
+      setHolesOuter: () => this.setState({ holes: 'outer' }),
+      setHolesBoth: () => this.setState({ holes: 'both' }),
+      presetAStyle: 'padding:7px 14px;border-radius:99px;font-size:12px;font-weight:800;cursor:pointer;' +
+        (s.preset === 'A' ? 'background:#E26D8E;color:#FFFFFF;box-shadow:0 2px 6px rgba(226,109,142,0.35);' : 'background:#F0E9DB;color:#7A6C58;'),
+      presetBStyle: 'padding:7px 14px;border-radius:99px;font-size:12px;font-weight:800;cursor:pointer;' +
+        (s.preset === 'B' ? 'background:#E26D8E;color:#FFFFFF;box-shadow:0 2px 6px rgba(226,109,142,0.35);' : 'background:#F0E9DB;color:#7A6C58;'),
+      setPresetA: () => this.setState({ preset: 'A' }),
+      setPresetB: () => this.setState({ preset: 'B' }),
+    };
+  }
+}
+</script>
+</body>
+</html>
