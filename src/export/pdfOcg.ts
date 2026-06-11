@@ -196,8 +196,11 @@ export async function buildLayeredPdf(model: ExportModel): Promise<Uint8Array> {
   const printImages: { obj: ExportObjectModel; name: PDFName }[] = []
   const whiteImages: { obj: ExportObjectModel; name: PDFName }[] = []
   for (const obj of model.objects) {
-    const printImg = await doc.embedPng(obj.printUrl)
-    printImages.push({ obj, name: page.node.newXObject('AcstaPrint', printImg.ref) })
+    // カットのみのパーツ（台座など）はラスター埋め込みなし
+    if (obj.printUrl !== null) {
+      const printImg = await doc.embedPng(obj.printUrl)
+      printImages.push({ obj, name: page.node.newXObject('AcstaPrint', printImg.ref) })
+    }
     if (obj.whiteUrl !== null) {
       const whiteImg = await doc.embedPng(obj.whiteUrl)
       whiteImages.push({ obj, name: page.node.newXObject('AcstaWhite', whiteImg.ref) })

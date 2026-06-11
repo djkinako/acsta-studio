@@ -134,6 +134,7 @@ export default function RightPanel({ views, violations, indicators }: Props) {
 
   return (
     <div
+      className="ui-scale"
       style={{
         width: 270,
         flexShrink: 0,
@@ -166,11 +167,11 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                 fontWeight: 800,
                 padding: '3px 9px',
                 borderRadius: 99,
-                background: '#fbe3ea',
-                color: '#c2557a',
+                background: sel.obj.type === 'stand' ? '#eaf5f9' : '#fbe3ea',
+                color: sel.obj.type === 'stand' ? '#4e89a3' : '#c2557a',
               }}
             >
-              画像
+              {sel.obj.type === 'stand' ? '台座' : '画像'}
             </div>
           )}
         </div>
@@ -193,7 +194,7 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                 whiteSpace: 'nowrap',
               }}
             >
-              {sel.source.name}
+              {sel.source?.name ?? sel.label}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               <NumberField
@@ -210,13 +211,17 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                 suffix="mm"
                 onChange={(y) => updateObject(sel.obj.id, { y })}
               />
-              <NumberField
-                label="幅"
-                value={Math.round(sel.obj.widthMm * 10) / 10}
-                step={1}
-                suffix="mm"
-                onChange={(w) => updateObject(sel.obj.id, { widthMm: Math.max(5, Math.min(300, w)) })}
-              />
+              {sel.obj.type === 'image' && (
+                <NumberField
+                  label="幅"
+                  value={Math.round(sel.obj.widthMm * 10) / 10}
+                  step={1}
+                  suffix="mm"
+                  onChange={(w) =>
+                    updateObject(sel.obj.id, { widthMm: Math.max(5, Math.min(300, w)) })
+                  }
+                />
+              )}
               <NumberField
                 label="回転"
                 value={Math.round(sel.obj.rot * 10) / 10}
@@ -225,6 +230,51 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                 onChange={(rot) => updateObject(sel.obj.id, { rot: ((rot % 360) + 360) % 360 })}
               />
             </div>
+
+            {/* 吸着済みタブの一覧 */}
+            {sel.obj.type === 'image' && (sel.obj.tabs?.length ?? 0) > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div className="card-label" style={{ marginBottom: 6 }}>
+                  吸着タブ
+                </div>
+                {sel.obj.tabs!.map((tab, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: '6px 10px',
+                      borderRadius: 9,
+                      background: '#eaf5f9',
+                      marginBottom: 4,
+                    }}
+                  >
+                    <span style={{ fontSize: 11.5, fontWeight: 800, color: '#4e89a3', flex: 1 }}>
+                      タブ {tab.size} <span style={{ fontWeight: 700 }}>↔ 穴{tab.size} 対応</span>
+                    </span>
+                    <button
+                      onClick={() =>
+                        updateObject(sel.obj.id, {
+                          tabs: sel.obj.tabs!.filter((_, j) => j !== i),
+                        })
+                      }
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--danger-text)',
+                        fontSize: 11,
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        fontFamily: "'M PLUS Rounded 1c', sans-serif",
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
               <button

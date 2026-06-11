@@ -53,10 +53,10 @@ export function buildExportSvg(model: ExportModel): string {
       ` width="${fmt(paperW)}mm" height="${fmt(paperH)}mm" viewBox="0 0 ${fmt(paperW)} ${fmt(paperH)}">`,
   )
 
-  // print: カラー版ラスター（dataURL埋め込み）
+  // print: カラー版ラスター（dataURL埋め込み）。カットのみのパーツは含めない
   lines.push(`  <g id="${escapeXml(layerNames.print)}">`)
   for (const obj of objects) {
-    lines.push(imageTag(obj, obj.printUrl))
+    if (obj.printUrl !== null) lines.push(imageTag(obj, obj.printUrl))
   }
   lines.push('  </g>')
 

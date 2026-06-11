@@ -1,17 +1,31 @@
 import { create } from 'zustand'
+import type { PartSize } from '../parts/defs'
+
+/** 画像オブジェクトに吸着したタブ（位置はカットライン輪郭上の弧長パラメータ） */
+export interface PlacedTab {
+  size: PartSize
+  /** 輪郭上の位置 t ∈ [0,1) */
+  t: number
+}
 
 /** 配置済みオブジェクト。座標は中心基準のワールドmm */
 export interface PlacedObject {
   id: string
-  sourceId: string
+  type: 'image' | 'stand'
+  /** type='image' のとき必須 */
+  sourceId?: string
+  /** type='stand' のとき必須 */
+  partSize?: PartSize
   /** 中心X（mm） */
   x: number
   /** 中心Y（mm） */
   y: number
   /** 回転（deg、時計回り） */
   rot: number
-  /** 配置幅（mm）。高さはアスペクト比から導出 */
+  /** 配置幅（mm、不透明領域基準）。台座は定義寸法固定 */
   widthMm: number
+  /** 吸着済みタブ（画像のみ） */
+  tabs?: PlacedTab[]
 }
 
 let nextId = 1

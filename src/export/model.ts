@@ -6,8 +6,8 @@ import type { Polygons } from '../geometry/types'
  * ビルダー側はこのモデルだけに依存し、ストアやDOMを参照しない。
  */
 export interface ExportObjectModel {
-  /** カラー版PNG（dataURL） */
-  printUrl: string
+  /** カラー版PNG（dataURL）。null = カットのみのパーツ（台座など） */
+  printUrl: string | null
   /** 白版PNG（#000塗り・透過、dataURL）。null = 白版なし */
   whiteUrl: string | null
   /** 配置中心（ワールドmm） */

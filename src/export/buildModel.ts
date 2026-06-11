@@ -21,8 +21,9 @@ export function buildExportModel(views: ObjectView[], opts: BuildModelOptions): 
     cutColor: opts.cutColor,
     cutStrokeMm: 0.1,
     objects: views.map((v) => ({
-      printUrl: v.source.url,
-      whiteUrl: getWhiteUrls(v.source.id, opts.whiteShrinkPx)?.exportUrl ?? null,
+      // 台座などカットのみのパーツは printUrl/whiteUrl とも null
+      printUrl: v.source?.url ?? null,
+      whiteUrl: v.source ? (getWhiteUrls(v.source.id, opts.whiteShrinkPx)?.exportUrl ?? null) : null,
       x: v.obj.x,
       y: v.obj.y,
       rot: v.obj.rot,

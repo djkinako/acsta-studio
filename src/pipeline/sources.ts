@@ -1,10 +1,13 @@
 import { extractContours } from '../geometry/contour'
 import { simplifyClosed } from '../geometry/simplify'
 import { bboxOf } from '../geometry/transform'
-import { generateCutline, inflateForGapCheck } from '../geometry/offset'
+import { generateCutline, inflateForGapCheck, unionPolygons } from '../geometry/offset'
 import { alphaMask, erodeMask, maskToRgba } from '../geometry/erosion'
+import { largestRing, tabPolygonAt } from '../parts/attach'
+import { STAND_DEFS, TAB_DEFS, standRings, type PartSize } from '../parts/defs'
 import type { Polygons, Ring } from '../geometry/types'
 import type { GenerationParams } from '../stores/settings'
+import type { PlacedTab } from '../stores/project'
 
 /**
  * 読み込んだ元画像のレジストリ（Reactのストア外で保持）。
@@ -72,7 +75,7 @@ export function trimWidthPx(source: SourceImage): number {
 export interface ObjectGeometry {
   /** 簡略化済み輪郭（表示・最短距離計算用） */
   contour: Polygons
-  /** カットライン */
+  /** カットライン（吸着タブとの union 済み） */
   cutline: Polygons
   /** 間隔チェック用（カットラインを minGap/2 膨張） */
   gapPoly: Polygons
@@ -84,6 +87,8 @@ export interface ObjectGeometry {
   /** ローカル座標での画像左上のオフセット（mm） */
   imageOffsetX: number
   imageOffsetY: number
+  /** 吸着タブのハンドル・ラベル位置（ローカルmm） */
+  tabMarkers: Array<{ x: number; y: number; size: PartSize; index: number }>
 }
 
 const geomCache = new Map<string, ObjectGeometry>()
@@ -92,6 +97,7 @@ export function getObjectGeometry(
   sourceId: string,
   widthMm: number,
   params: GenerationParams,
+  tabs: PlacedTab[] = [],
 ): ObjectGeometry | null {
   const source = sources.get(sourceId)
   if (!source) return null
@@ -104,6 +110,7 @@ export function getObjectGeometry(
     params.tolMm,
     params.minGapMm,
     params.includeHoles,
+    tabs.map((tab) => `${tab.size}@${tab.t.toFixed(4)}`).join(','),
   ].join('|')
   const cached = geomCache.get(key)
   if (cached) return cached
@@ -120,12 +127,30 @@ export function getObjectGeometry(
     ring.map((p) => ({ x: p.x * scale - cx, y: p.y * scale - cy })),
   )
   const contour = contoursMm.map((ring) => simplifyClosed(ring, params.tolMm))
-  const cutline = generateCutline(contour, {
+  let cutline = generateCutline(contour, {
     offsetMm: params.offsetMm,
     roundRadiusMm: params.roundMm,
     smoothMm: params.smoothMm,
     includeHoles: params.includeHoles,
   })
+
+  // 吸着タブをカットラインへブーリアン結合（SPEC 6.4）
+  const tabMarkers: ObjectGeometry['tabMarkers'] = []
+  const attachRing = largestRing(cutline)
+  if (attachRing && tabs.length > 0) {
+    for (let i = 0; i < tabs.length; i++) {
+      const { polygon, pose } = tabPolygonAt(attachRing, tabs[i].t, tabs[i].size)
+      cutline = unionPolygons(cutline, [polygon])
+      const def = TAB_DEFS[tabs[i].size]
+      tabMarkers.push({
+        x: pose.point.x + pose.normal.x * (def.heightMm / 2),
+        y: pose.point.y + pose.normal.y * (def.heightMm / 2),
+        size: tabs[i].size,
+        index: i,
+      })
+    }
+  }
+
   const gapPoly = inflateForGapCheck(cutline, params.minGapMm)
   const geometry: ObjectGeometry = {
     contour,
@@ -136,11 +161,39 @@ export function getObjectGeometry(
     imageHeightMm: source.heightPx * scale,
     imageOffsetX: -cx,
     imageOffsetY: -cy,
+    tabMarkers,
   }
 
   // キャッシュ肥大防止（パラメータ連続変更対策）
   if (geomCache.size > 200) geomCache.clear()
   geomCache.set(key, geometry)
+  return geometry
+}
+
+/**
+ * 台座のローカル幾何（カットラインのみ。カラー版・白版なし）。
+ * 寸法はテンプレ確定値なのでオフセット・角丸め等の生成パラメータは適用しない。
+ */
+const standGeomCache = new Map<string, ObjectGeometry>()
+
+export function getStandGeometry(size: PartSize, minGapMm: number): ObjectGeometry {
+  const key = `${size}|${minGapMm}`
+  const cached = standGeomCache.get(key)
+  if (cached) return cached
+  const def = STAND_DEFS[size]
+  const cutline = standRings(def)
+  const geometry: ObjectGeometry = {
+    contour: cutline,
+    cutline,
+    gapPoly: inflateForGapCheck(cutline, minGapMm),
+    heightMm: def.heightMm,
+    imageWidthMm: 0,
+    imageHeightMm: 0,
+    imageOffsetX: 0,
+    imageOffsetY: 0,
+    tabMarkers: [],
+  }
+  standGeomCache.set(key, geometry)
   return geometry
 }
 

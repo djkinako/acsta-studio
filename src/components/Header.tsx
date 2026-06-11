@@ -84,6 +84,7 @@ export default function Header({ views, violationCount }: Props) {
 
   return (
     <div
+      className="ui-scale"
       style={{
         height: 58,
         background: 'var(--bg-header)',

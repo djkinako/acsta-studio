@@ -27,6 +27,7 @@ export default function Footer({ violationCount, objectCount, onZoomIn, onZoomOu
 
   return (
     <div
+      className="ui-scale"
       style={{
         height: 34,
         background: 'var(--bg-header)',

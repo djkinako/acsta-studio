@@ -11,8 +11,11 @@ import { useProject } from '../stores/project'
 import { useSettings } from '../stores/settings'
 import { useUi } from '../stores/ui'
 import { ringsToSvgPath } from '../geometry/offset'
+import { getObjectGeometry } from '../pipeline/sources'
+import { largestRing, nearestParamOnRing } from '../parts/attach'
+import { TAB_DEFS, type PartSize } from '../parts/defs'
+import { worldToLocal, type ObjectView, type PairIndicator } from './EditorApp'
 import type { Rect } from '../geometry/transform'
-import type { ObjectView, PairIndicator } from './EditorApp'
 import type { ViolationResult } from '../pipeline/violations'
 
 export interface CanvasHandle {
@@ -28,6 +31,7 @@ interface Props {
   paper: { w: number; h: number }
   marginRect: Rect
   minGapMm: number
+  onDropPart: (part: { kind: 'tab' | 'stand'; size: PartSize }, mm: { x: number; y: number }) => void
 }
 
 interface ViewState {
@@ -49,6 +53,7 @@ type DragState =
       startDist: number
       origWidth: number
     }
+  | { type: 'tab'; id: string; index: number }
 
 const ZOOM_MIN = 0.5
 const ZOOM_MAX = 40
@@ -226,7 +231,7 @@ function Rulers({
 }
 
 const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
-  { views, violations, indicators, paper, marginRect, minGapMm },
+  { views, violations, indicators, paper, marginRect, minGapMm, onDropPart },
   ref,
 ) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -368,6 +373,15 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
     svgRef.current?.setPointerCapture(e.pointerId)
   }
 
+  const onTabMarkerDown = (e: ReactPointerEvent, id: string, index: number) => {
+    if (e.button !== 0) return
+    e.stopPropagation()
+    useProject.getState().beginGesture()
+    dragRef.current = { type: 'tab', id, index }
+    useUi.getState().setInteracting(true)
+    svgRef.current?.setPointerCapture(e.pointerId)
+  }
+
   const onBackgroundPointerDown = (e: ReactPointerEvent) => {
     if (e.button !== 0) return
     dragRef.current = {
@@ -427,6 +441,23 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
         setScaling({ id: drag.id, factor: width / drag.origWidth })
         break
       }
+      case 'tab': {
+        // タブを輪郭に沿ってスライド（タブ無し基準カットラインの最近接点へ）
+        const obj = useProject.getState().objects.find((o) => o.id === drag.id)
+        if (!obj || !obj.sourceId || !obj.tabs) break
+        const baseGeo = getObjectGeometry(
+          obj.sourceId,
+          obj.widthMm,
+          useSettings.getState().params,
+          [],
+        )
+        const ring = baseGeo ? largestRing(baseGeo.cutline) : null
+        if (!ring) break
+        const near = nearestParamOnRing(ring, worldToLocal(mm, obj))
+        const tabs = obj.tabs.map((tab, i) => (i === drag.index ? { ...tab, t: near.t } : tab))
+        useProject.getState().updateObject(drag.id, { tabs }, true)
+        break
+      }
     }
   }
 
@@ -440,7 +471,12 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
       useProject.getState().updateObject(drag.id, { widthMm: Math.round(width * 10) / 10 }, true)
       setScaling(null)
     }
-    if (drag.type === 'move' || drag.type === 'rotate' || drag.type === 'scale') {
+    if (
+      drag.type === 'move' ||
+      drag.type === 'rotate' ||
+      drag.type === 'scale' ||
+      drag.type === 'tab'
+    ) {
       useProject.getState().endGesture()
     }
     dragRef.current = { type: 'none' }
@@ -468,6 +504,17 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
         backgroundImage: 'radial-gradient(rgba(141,116,77,0.16) 1px, transparent 1.3px)',
         backgroundSize: '22px 22px',
         touchAction: 'none',
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault()
+        const data = e.dataTransfer.getData('application/x-acsta-part')
+        if (!data) return
+        try {
+          onDropPart(JSON.parse(data), screenToMm(e))
+        } catch {
+          /* パーツ以外のドロップは無視 */
+        }
       }}
     >
       <Rulers view={view} size={size} paper={paper} />
@@ -558,6 +605,7 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   <path
                     d={cutPath}
                     fill="#ffffff"
+                    fillRule="evenodd"
                     stroke="#ffffff"
                     strokeWidth={0.7}
                     strokeLinejoin="round"
@@ -571,7 +619,20 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   />
                 </>
               )}
-              {layerVisible.print && (
+              {obj.type === 'stand' && (
+                <>
+                  {/* 台座: カットのみ（印刷なし）。穴は evenodd で抜く */}
+                  <path d={cutPath} fill="rgba(180,214,228,0.45)" fillRule="evenodd" stroke="none" />
+                  <text
+                    y={geo.heightMm / 2 + 5}
+                    textAnchor="middle"
+                    style={{ fontSize: 3.2, fill: '#4e89a3', fontWeight: 800 }}
+                  >
+                    {v.label}
+                  </text>
+                </>
+              )}
+              {source && layerVisible.print && (
                 <image
                   href={source.url}
                   x={geo.imageOffsetX}
@@ -581,8 +642,8 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   preserveAspectRatio="none"
                 />
               )}
-              {!layerVisible.print && (
-                <path d={cutPath} fill="rgba(180,214,228,0.2)" stroke="none" />
+              {source && !layerVisible.print && (
+                <path d={cutPath} fill="rgba(180,214,228,0.2)" fillRule="evenodd" stroke="none" />
               )}
               {layerVisible.white && v.whiteVisUrl && (
                 <image
@@ -595,6 +656,30 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   style={{ pointerEvents: 'none' }}
                 />
               )}
+              {/* 吸着タブのラベル */}
+              {layerVisible.cut &&
+                geo.tabMarkers.map((m) => (
+                  <g key={`tablabel-${m.index}`} style={{ pointerEvents: 'none' }}>
+                    <rect
+                      x={m.x - 7}
+                      y={m.y + TAB_DEFS[m.size].heightMm / 2 + 1}
+                      width={14}
+                      height={4.6}
+                      rx={2.3}
+                      fill="#eaf5f9"
+                      stroke="#8fb9cc"
+                      strokeWidth={0.25}
+                    />
+                    <text
+                      x={m.x}
+                      y={m.y + TAB_DEFS[m.size].heightMm / 2 + 4.4}
+                      textAnchor="middle"
+                      style={{ fontSize: 2.8, fill: '#4e89a3', fontWeight: 800 }}
+                    >
+                      {TAB_DEFS[m.size].label}
+                    </text>
+                  </g>
+                ))}
             </g>
           )
         })}
@@ -621,26 +706,42 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   strokeWidth={px(1.4)}
                   strokeDasharray={`${px(5)} ${px(3)}`}
                 />
-                {/* 拡縮ハンドル（四隅） */}
-                {[
-                  [-w, -h],
-                  [w, -h],
-                  [w, h],
-                  [-w, h],
-                ].map(([hx, hy], i) => (
-                  <rect
-                    key={i}
-                    x={hx - hs}
-                    y={hy - hs}
-                    width={hs * 2}
-                    height={hs * 2}
-                    fill="#ffffff"
-                    stroke="var(--accent)"
-                    strokeWidth={px(1.4)}
-                    style={{ cursor: 'nwse-resize' }}
-                    onPointerDown={(e) => onScaleHandleDown(e, obj.id)}
-                  />
-                ))}
+                {/* 拡縮ハンドル（四隅）。台座は寸法固定のため非表示 */}
+                {obj.type === 'image' &&
+                  [
+                    [-w, -h],
+                    [w, -h],
+                    [w, h],
+                    [-w, h],
+                  ].map(([hx, hy], i) => (
+                    <rect
+                      key={i}
+                      x={hx - hs}
+                      y={hy - hs}
+                      width={hs * 2}
+                      height={hs * 2}
+                      fill="#ffffff"
+                      stroke="var(--accent)"
+                      strokeWidth={px(1.4)}
+                      style={{ cursor: 'nwse-resize' }}
+                      onPointerDown={(e) => onScaleHandleDown(e, obj.id)}
+                    />
+                  ))}
+                {/* タブのスライドハンドル */}
+                {obj.type === 'image' &&
+                  v.geo.tabMarkers.map((m) => (
+                    <circle
+                      key={`tabhandle-${m.index}`}
+                      cx={m.x}
+                      cy={m.y}
+                      r={px(7)}
+                      fill="rgba(234,245,249,0.9)"
+                      stroke="#4e89a3"
+                      strokeWidth={px(1.6)}
+                      style={{ cursor: 'grab' }}
+                      onPointerDown={(e) => onTabMarkerDown(e, obj.id, m.index)}
+                    />
+                  ))}
                 {/* 回転ハンドル */}
                 <line
                   x1={0}

@@ -5,11 +5,14 @@ import { useUi } from '../stores/ui'
 import {
   getObjectGeometry,
   getSource,
+  getStandGeometry,
   getWhiteUrls,
   importPng,
   type ObjectGeometry,
   type SourceImage,
 } from '../pipeline/sources'
+import { largestRing, nearestParamOnRing } from '../parts/attach'
+import { STAND_DEFS, type PartSize } from '../parts/defs'
 import { checkViolations, type ViolationResult } from '../pipeline/violations'
 import { transformRings, minDistanceBetween, type ClosestPair, type Rect } from '../geometry/transform'
 import type { Polygons } from '../geometry/types'
@@ -21,18 +24,34 @@ import Footer from './Footer'
 
 export interface ObjectView {
   obj: PlacedObject
-  source: SourceImage
+  /** type='stand' のときは null */
+  source: SourceImage | null
   geo: ObjectGeometry
   worldCutline: Polygons
   worldGap: Polygons
   /** 白版の編集画面用URL（水色可視化） */
   whiteVisUrl: string | null
+  /** 台座のラベル表示 */
+  label?: string
 }
 
 export interface PairIndicator {
   a: string
   b: string
   closest: ClosestPair
+}
+
+/** ワールドmm → オブジェクトローカル座標（回転・平行移動の逆変換） */
+export function worldToLocal(
+  p: { x: number; y: number },
+  obj: { x: number; y: number; rot: number },
+): { x: number; y: number } {
+  const rad = (-obj.rot * Math.PI) / 180
+  const cos = Math.cos(rad)
+  const sin = Math.sin(rad)
+  const dx = p.x - obj.x
+  const dy = p.y - obj.y
+  return { x: dx * cos - dy * sin, y: dx * sin + dy * cos }
 }
 
 export default function EditorApp() {
@@ -57,9 +76,23 @@ export default function EditorApp() {
   const views = useMemo<ObjectView[]>(() => {
     const result: ObjectView[] = []
     for (const obj of objects) {
+      if (obj.type === 'stand' && obj.partSize) {
+        const geo = getStandGeometry(obj.partSize, settings.params.minGapMm)
+        result.push({
+          obj,
+          source: null,
+          geo,
+          worldCutline: transformRings(geo.cutline, obj.x, obj.y, obj.rot),
+          worldGap: transformRings(geo.gapPoly, obj.x, obj.y, obj.rot),
+          whiteVisUrl: null,
+          label: STAND_DEFS[obj.partSize].label,
+        })
+        continue
+      }
+      if (!obj.sourceId) continue
       const source = getSource(obj.sourceId)
       if (!source) continue
-      const geo = getObjectGeometry(obj.sourceId, obj.widthMm, settings.params)
+      const geo = getObjectGeometry(obj.sourceId, obj.widthMm, settings.params, obj.tabs ?? [])
       if (!geo) continue
       result.push({
         obj,
@@ -114,6 +147,7 @@ export default function EditorApp() {
         const defaultWidth = Math.min(60, marginRect.maxX - marginRect.minX - 10)
         const obj: PlacedObject = {
           id: newObjectId(),
+          type: 'image',
           sourceId: source.id,
           x: paper.w / 2 + offset,
           y: paper.h / 2 + offset,
@@ -125,6 +159,47 @@ export default function EditorApp() {
       }
     },
     [paper.w, paper.h, marginRect],
+  )
+
+  /** パーツのドロップ処理（LeftPanel からの HTML5 DnD） */
+  const dropPart = useCallback(
+    (part: { kind: 'tab' | 'stand'; size: PartSize }, mm: { x: number; y: number }) => {
+      const { addObject, updateObject, select } = useProject.getState()
+      if (part.kind === 'stand') {
+        addObject({
+          id: newObjectId(),
+          type: 'stand',
+          partSize: part.size,
+          x: mm.x,
+          y: mm.y,
+          rot: 0,
+          widthMm: STAND_DEFS[part.size].widthMm,
+        })
+        return
+      }
+      // タブ: ドロップ位置に最も近い画像オブジェクトの輪郭へ吸着
+      let best: { id: string; t: number; distance: number } | null = null
+      for (const v of views) {
+        if (v.obj.type !== 'image' || !v.obj.sourceId) continue
+        // タブ無しの基準カットラインでパラメータを求める（自身のタブの瘤を無視）
+        const baseGeo = getObjectGeometry(v.obj.sourceId, v.obj.widthMm, settings.params, [])
+        const ring = baseGeo ? largestRing(baseGeo.cutline) : null
+        if (!ring) continue
+        const local = worldToLocal(mm, v.obj)
+        const near = nearestParamOnRing(ring, local)
+        if (!best || near.distance < best.distance) {
+          best = { id: v.obj.id, t: near.t, distance: near.distance }
+        }
+      }
+      if (best && best.distance < 25) {
+        const target = useProject.getState().objects.find((o) => o.id === best.id)
+        if (target) {
+          updateObject(best.id, { tabs: [...(target.tabs ?? []), { size: part.size, t: best.t }] })
+          select(best.id)
+        }
+      }
+    },
+    [views, settings.params],
   )
 
   // キーボードショートカット（SPEC 6.2）
@@ -200,6 +275,7 @@ export default function EditorApp() {
           paper={paper}
           marginRect={marginRect}
           minGapMm={settings.params.minGapMm}
+          onDropPart={dropPart}
         />
         <RightPanel views={views} violations={violations} indicators={indicators} />
       </div>

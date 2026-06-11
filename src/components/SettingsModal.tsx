@@ -78,6 +78,7 @@ export default function SettingsModal({ onClose }: Props) {
 
   return (
     <div
+      className="ui-scale"
       onClick={onClose}
       style={{
         position: 'fixed',
