@@ -161,6 +161,18 @@ export function unionPolygons(a: Polygons, b: Polygons): Polygons {
   return fromClipper(union(toClipper([...a, ...b])))
 }
 
+/**
+ * 凹の角だけを丸める（クロージング: +r → −r）。
+ * タブ接合部の約90°の角の丸めに使う。凸側・穴の寸法はほぼ不変
+ * （円弧近似誤差 0.005mm 程度）。
+ */
+export function closeCorners(polys: Polygons, radiusMm: number): Polygons {
+  if (radiusMm <= 0 || polys.length === 0) return polys
+  let paths = inflate(toClipper(polys), radiusMm * SCALE)
+  paths = inflate(paths, -radiusMm * SCALE)
+  return fromClipper(paths)
+}
+
 /** リングをSVGパス文字列へ（mm座標のまま） */
 export function ringsToSvgPath(polys: Polygons, precision = 3): string {
   let d = ''

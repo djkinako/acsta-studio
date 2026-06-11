@@ -1,10 +1,17 @@
 import { extractContours } from '../geometry/contour'
 import { simplifyClosed } from '../geometry/simplify'
 import { bboxOf } from '../geometry/transform'
-import { generateCutline, inflateForGapCheck, unionPolygons } from '../geometry/offset'
+import { closeCorners, generateCutline, inflateForGapCheck, unionPolygons } from '../geometry/offset'
 import { alphaMask, erodeMask, maskToRgba } from '../geometry/erosion'
-import { largestRing, tabPolygonAt } from '../parts/attach'
-import { STAND_DEFS, TAB_DEFS, standRings, type PartSize } from '../parts/defs'
+import { attachmentPolygonsAt, largestRing } from '../parts/attach'
+import {
+  ATTACHMENT_DEFS,
+  JUNCTION_ROUND_MM,
+  STAND_DEFS,
+  standRings,
+  type AttachmentId,
+  type PartSize,
+} from '../parts/defs'
 import type { Polygons, Ring } from '../geometry/types'
 import type { GenerationParams } from '../stores/settings'
 import type { PlacedTab } from '../stores/project'
@@ -87,8 +94,8 @@ export interface ObjectGeometry {
   /** ローカル座標での画像左上のオフセット（mm） */
   imageOffsetX: number
   imageOffsetY: number
-  /** 吸着タブのハンドル・ラベル位置（ローカルmm） */
-  tabMarkers: Array<{ x: number; y: number; size: PartSize; index: number }>
+  /** 吸着パーツのハンドル・ラベル位置と外向き法線（ローカルmm） */
+  tabMarkers: Array<{ x: number; y: number; nx: number; ny: number; size: AttachmentId; index: number }>
 }
 
 const geomCache = new Map<string, ObjectGeometry>()
@@ -134,21 +141,25 @@ export function getObjectGeometry(
     includeHoles: params.includeHoles,
   })
 
-  // 吸着タブをカットラインへブーリアン結合（SPEC 6.4）
+  // 吸着パーツ（タブ・穴付きポッチ）をカットラインへブーリアン結合（SPEC 6.4）
   const tabMarkers: ObjectGeometry['tabMarkers'] = []
   const attachRing = largestRing(cutline)
   if (attachRing && tabs.length > 0) {
     for (let i = 0; i < tabs.length; i++) {
-      const { polygon, pose } = tabPolygonAt(attachRing, tabs[i].t, tabs[i].size)
-      cutline = unionPolygons(cutline, [polygon])
-      const def = TAB_DEFS[tabs[i].size]
+      const { polygons, pose } = attachmentPolygonsAt(attachRing, tabs[i].t, tabs[i].size)
+      cutline = unionPolygons(cutline, polygons)
+      const def = ATTACHMENT_DEFS[tabs[i].size]
       tabMarkers.push({
-        x: pose.point.x + pose.normal.x * (def.heightMm / 2),
-        y: pose.point.y + pose.normal.y * (def.heightMm / 2),
+        x: pose.point.x + pose.normal.x * def.markerMm,
+        y: pose.point.y + pose.normal.y * def.markerMm,
+        nx: pose.normal.x,
+        ny: pose.normal.y,
         size: tabs[i].size,
         index: i,
       })
     }
+    // 接合部（本体とパーツの境目にできる約90°の角）を丸める
+    cutline = closeCorners(cutline, JUNCTION_ROUND_MM)
   }
 
   const gapPoly = inflateForGapCheck(cutline, params.minGapMm)
@@ -176,23 +187,30 @@ export function getObjectGeometry(
  */
 const standGeomCache = new Map<string, ObjectGeometry>()
 
-export function getStandGeometry(size: PartSize, minGapMm: number): ObjectGeometry {
-  const key = `${size}|${minGapMm}`
+export function getStandGeometry(
+  size: PartSize,
+  minGapMm: number,
+  widthMm?: number,
+): ObjectGeometry {
+  const def = STAND_DEFS[size]
+  const w = widthMm ?? def.widthMm
+  const key = `${size}|${minGapMm}|${w.toFixed(2)}`
   const cached = standGeomCache.get(key)
   if (cached) return cached
-  const def = STAND_DEFS[size]
-  const cutline = standRings(def)
+  // 外形は比例スケール、穴の寸法はタブとの嵌合を守るため固定
+  const cutline = standRings(def, w)
   const geometry: ObjectGeometry = {
     contour: cutline,
     cutline,
     gapPoly: inflateForGapCheck(cutline, minGapMm),
-    heightMm: def.heightMm,
+    heightMm: (def.heightMm * w) / def.widthMm,
     imageWidthMm: 0,
     imageHeightMm: 0,
     imageOffsetX: 0,
     imageOffsetY: 0,
     tabMarkers: [],
   }
+  if (standGeomCache.size > 100) standGeomCache.clear()
   standGeomCache.set(key, geometry)
   return geometry
 }

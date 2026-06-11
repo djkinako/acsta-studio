@@ -2,6 +2,7 @@ import { useProject } from '../stores/project'
 import { useUi } from '../stores/ui'
 import { useSettings } from '../stores/settings'
 import { getSource } from '../pipeline/sources'
+import { ATTACHMENT_DEFS, STAND_DEFS, standMinWidth } from '../parts/defs'
 import type { ObjectView, PairIndicator } from './EditorApp'
 import type { ViolationResult } from '../pipeline/violations'
 
@@ -211,17 +212,19 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                 suffix="mm"
                 onChange={(y) => updateObject(sel.obj.id, { y })}
               />
-              {sel.obj.type === 'image' && (
-                <NumberField
-                  label="幅"
-                  value={Math.round(sel.obj.widthMm * 10) / 10}
-                  step={1}
-                  suffix="mm"
-                  onChange={(w) =>
-                    updateObject(sel.obj.id, { widthMm: Math.max(5, Math.min(300, w)) })
-                  }
-                />
-              )}
+              <NumberField
+                label={sel.obj.type === 'stand' ? '幅（穴は固定）' : '幅'}
+                value={Math.round(sel.obj.widthMm * 10) / 10}
+                step={1}
+                suffix="mm"
+                onChange={(w) => {
+                  const minW =
+                    sel.obj.type === 'stand' && sel.obj.partSize
+                      ? standMinWidth(STAND_DEFS[sel.obj.partSize])
+                      : 5
+                  updateObject(sel.obj.id, { widthMm: Math.max(minW, Math.min(300, w)) })
+                }}
+              />
               <NumberField
                 label="回転"
                 value={Math.round(sel.obj.rot * 10) / 10}
@@ -251,7 +254,10 @@ export default function RightPanel({ views, violations, indicators }: Props) {
                     }}
                   >
                     <span style={{ fontSize: 11.5, fontWeight: 800, color: '#4e89a3', flex: 1 }}>
-                      タブ {tab.size} <span style={{ fontWeight: 700 }}>↔ 穴{tab.size} 対応</span>
+                      {ATTACHMENT_DEFS[tab.size].label}
+                      {ATTACHMENT_DEFS[tab.size].kind === 'tab' && (
+                        <span style={{ fontWeight: 700 }}> ↔ 穴{tab.size} 対応</span>
+                      )}
                     </span>
                     <button
                       onClick={() =>

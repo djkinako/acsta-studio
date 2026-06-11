@@ -82,12 +82,91 @@ export function tabRing(def: TabDef): Ring {
   ]
 }
 
+/** 円リング（screen座標系で時計回り = 外周） */
+function circleRing(cx: number, cy: number, r: number, segs = 36): Ring {
+  return arc(cx, cy, r, 0, 360, segs).slice(0, -1)
+}
+
+export interface KeyringDef {
+  /** キーホルダー金具を通す穴の直径（mm） */
+  holeDmm: number
+  /** 穴の周囲の縁の太さ（mm） */
+  rimMm: number
+}
+
+/**
+ * アクキー用の穴付きポッチ（キーホール）のローカル形状。
+ * 丸い頭（中央に貫通穴）＋本体へ繋がる首。穴は逆回転リング。
+ */
+export function keyringRings(def: KeyringDef): Ring[] {
+  const outerR = def.holeDmm / 2 + def.rimMm
+  const overlap = 2
+  const cy = outerR - 1.2 // 頭の中心。本体側へ1.2mm食い込ませる
+  const head = circleRing(0, cy, outerR)
+  const neckHw = outerR * 0.75
+  const neck: Ring = [
+    { x: -neckHw, y: -overlap },
+    { x: neckHw, y: -overlap },
+    { x: neckHw, y: cy },
+    { x: -neckHw, y: cy },
+  ]
+  const hole = circleRing(0, cy, def.holeDmm / 2, 28).reverse()
+  return [head, neck, hole]
+}
+
+/** 輪郭吸着パーツ（タブ＋穴付きポッチ）の統合レジストリ */
+export type AttachmentId = PartSize | 'K3' | 'K5'
+
+export interface AttachmentDef {
+  id: AttachmentId
+  kind: 'tab' | 'keyring'
+  label: string
+  /** ハンドル・ラベルを置く法線方向の距離（mm） */
+  markerMm: number
+  rings: () => Ring[]
+}
+
+export const KEYRING_DEFS: Record<'K3' | 'K5', KeyringDef> = {
+  K3: { holeDmm: 3, rimMm: 2.2 },
+  K5: { holeDmm: 5, rimMm: 2.4 },
+}
+
+export const ATTACHMENT_DEFS: Record<AttachmentId, AttachmentDef> = {
+  S: { id: 'S', kind: 'tab', label: 'タブ S', markerMm: TAB_DEFS.S.heightMm / 2, rings: () => [tabRing(TAB_DEFS.S)] },
+  M: { id: 'M', kind: 'tab', label: 'タブ M', markerMm: TAB_DEFS.M.heightMm / 2, rings: () => [tabRing(TAB_DEFS.M)] },
+  L: { id: 'L', kind: 'tab', label: 'タブ L', markerMm: TAB_DEFS.L.heightMm / 2, rings: () => [tabRing(TAB_DEFS.L)] },
+  K3: {
+    id: 'K3',
+    kind: 'keyring',
+    label: 'ポッチ 穴3mm',
+    markerMm: KEYRING_DEFS.K3.holeDmm / 2 + KEYRING_DEFS.K3.rimMm - 1.2,
+    rings: () => keyringRings(KEYRING_DEFS.K3),
+  },
+  K5: {
+    id: 'K5',
+    kind: 'keyring',
+    label: 'ポッチ 穴5mm',
+    markerMm: KEYRING_DEFS.K5.holeDmm / 2 + KEYRING_DEFS.K5.rimMm - 1.2,
+    rings: () => keyringRings(KEYRING_DEFS.K5),
+  },
+}
+
+/** タブと本体の接合部（ほぼ90°の角）を丸める半径（mm） */
+export const JUNCTION_ROUND_MM = 0.8
+
 /**
  * 台座のローカル形状（中心原点）。
  * 外周の角丸矩形 + 中央の差し込み穴（逆回転リング = 穴）。
+ * widthMm で外形を比例スケールできるが、**穴の寸法はタブとの嵌合を守るため固定**。
  */
-export function standRings(def: StandDef): Ring[] {
-  const outer = roundedRectRing(def.widthMm, def.heightMm, 3)
+export function standRings(def: StandDef, widthMm = def.widthMm): Ring[] {
+  const factor = widthMm / def.widthMm
+  const outer = roundedRectRing(widthMm, def.heightMm * factor, 3 * Math.max(1, factor * 0.8))
   const hole = roundedRectRing(def.holeWmm, def.holeHmm, 0.8).reverse()
   return [outer, hole]
+}
+
+/** 台座の最小外形幅（穴＋両側の縁）。これ未満には縮小できない */
+export function standMinWidth(def: StandDef): number {
+  return def.holeWmm + 8
 }

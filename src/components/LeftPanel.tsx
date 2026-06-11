@@ -3,7 +3,7 @@ import { useProject } from '../stores/project'
 import { useSettings } from '../stores/settings'
 import { effectiveDpi } from '../geometry/units'
 import { trimWidthPx } from '../pipeline/sources'
-import { STAND_DEFS, TAB_DEFS } from '../parts/defs'
+import { KEYRING_DEFS, STAND_DEFS, TAB_DEFS } from '../parts/defs'
 import type { ObjectView } from './EditorApp'
 
 interface Props {
@@ -249,6 +249,70 @@ export default function LeftPanel({ views, onAddFiles }: Props) {
                 paddingLeft: 2,
               }}
             >
+              アクキー用ポッチ（穴付き）
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {(['K3', 'K5'] as const).map((id) => {
+                const def = KEYRING_DEFS[id]
+                const outerR = def.holeDmm / 2 + def.rimMm
+                return (
+                  <div
+                    key={id}
+                    draggable
+                    onDragStart={(e) =>
+                      e.dataTransfer.setData(
+                        'application/x-acsta-part',
+                        JSON.stringify({ kind: 'tab', size: id }),
+                      )
+                    }
+                    style={{
+                      background: '#fff',
+                      border: '1px solid var(--border-card)',
+                      borderRadius: 11,
+                      padding: '10px 4px 8px',
+                      textAlign: 'center',
+                      cursor: 'grab',
+                    }}
+                  >
+                    <svg
+                      width={outerR * 5 + 6}
+                      height={outerR * 5 + 6}
+                      viewBox={`0 0 ${outerR * 2 + 2} ${outerR * 2 + 2}`}
+                    >
+                      <circle
+                        cx={outerR + 1}
+                        cy={outerR + 1}
+                        r={outerR}
+                        fill="#d6e9f1"
+                        stroke="#7faec2"
+                        strokeWidth="0.5"
+                      />
+                      <circle
+                        cx={outerR + 1}
+                        cy={outerR + 1}
+                        r={def.holeDmm / 2}
+                        fill="var(--bg-panel)"
+                        stroke="#7faec2"
+                        strokeWidth="0.4"
+                      />
+                    </svg>
+                    <div style={{ fontSize: 11, fontWeight: 800, marginTop: 2 }}>穴{def.holeDmm}mm</div>
+                    <div style={{ fontSize: 9.5, color: 'var(--text-sub)' }}>キーホルダー用</div>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 800,
+                color: 'var(--text-sub)',
+                letterSpacing: '0.06em',
+                marginTop: 6,
+                paddingLeft: 2,
+              }}
+            >
               台座
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -321,7 +385,7 @@ export default function LeftPanel({ views, onAddFiles }: Props) {
                 lineHeight: 1.55,
               }}
             >
-              タブはイラストに、台座は用紙にドラッグしてな。タブと台座の穴はサイズをそろえる（タブM ↔ 穴M）。タブは本体カットラインに合体して、選択中に青ハンドルで輪郭沿いにスライドできるで。
+              タブ・ポッチはイラストに、台座は用紙にドラッグしてな。タブと台座の穴はサイズをそろえる（タブM ↔ 穴M）。吸着したパーツは選択中にピンクの⇄ハンドルで輪郭沿いにスライド、×で削除できるで。台座は外形だけ拡縮可（穴は固定）。
               <br />
               <span style={{ color: '#c97a3f' }}>⚠ 寸法は仮値。入稿先テンプレが届いたら差し替える</span>
             </div>

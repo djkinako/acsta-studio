@@ -1,5 +1,5 @@
 import { signedArea, type Point, type Ring } from '../geometry/types'
-import { TAB_DEFS, tabRing, type PartSize } from './defs'
+import { ATTACHMENT_DEFS, type AttachmentId } from './defs'
 
 /**
  * タブの吸着・スライド計算（SPEC 6.4）。
@@ -89,20 +89,25 @@ export function largestRing(rings: Ring[]): Ring | null {
   return best
 }
 
-/** タブのローカル形状を、輪郭上のパラメータ t の位置・向きに変換して返す */
-export function tabPolygonAt(
+/**
+ * 吸着パーツ（タブ・穴付きポッチ）のローカル形状を、
+ * 輪郭上のパラメータ t の位置・向きに変換して返す。
+ * 逆回転リング（穴）もそのまま変換される。
+ */
+export function attachmentPolygonsAt(
   ring: Ring,
   t: number,
-  size: PartSize,
-): { polygon: Ring; pose: RingPose } {
+  id: AttachmentId,
+): { polygons: Ring[]; pose: RingPose } {
   const pose = poseOnRing(ring, t)
-  const local = tabRing(TAB_DEFS[size])
   // ローカル +y を外向き法線へ回す回転: R(θ)·(0,1) = n
   const sin = -pose.normal.x
   const cos = pose.normal.y
-  const polygon = local.map((p) => ({
-    x: pose.point.x + p.x * cos - p.y * sin,
-    y: pose.point.y + p.x * sin + p.y * cos,
-  }))
-  return { polygon, pose }
+  const polygons = ATTACHMENT_DEFS[id].rings().map((local) =>
+    local.map((p) => ({
+      x: pose.point.x + p.x * cos - p.y * sin,
+      y: pose.point.y + p.x * sin + p.y * cos,
+    })),
+  )
+  return { polygons, pose }
 }

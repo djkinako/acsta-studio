@@ -12,7 +12,7 @@ import {
   type SourceImage,
 } from '../pipeline/sources'
 import { largestRing, nearestParamOnRing } from '../parts/attach'
-import { STAND_DEFS, type PartSize } from '../parts/defs'
+import { STAND_DEFS, type AttachmentId, type PartSize } from '../parts/defs'
 import { checkViolations, type ViolationResult } from '../pipeline/violations'
 import { transformRings, minDistanceBetween, type ClosestPair, type Rect } from '../geometry/transform'
 import type { Polygons } from '../geometry/types'
@@ -77,7 +77,7 @@ export default function EditorApp() {
     const result: ObjectView[] = []
     for (const obj of objects) {
       if (obj.type === 'stand' && obj.partSize) {
-        const geo = getStandGeometry(obj.partSize, settings.params.minGapMm)
+        const geo = getStandGeometry(obj.partSize, settings.params.minGapMm, obj.widthMm)
         result.push({
           obj,
           source: null,
@@ -163,17 +163,18 @@ export default function EditorApp() {
 
   /** パーツのドロップ処理（LeftPanel からの HTML5 DnD） */
   const dropPart = useCallback(
-    (part: { kind: 'tab' | 'stand'; size: PartSize }, mm: { x: number; y: number }) => {
+    (part: { kind: 'tab' | 'stand'; size: string }, mm: { x: number; y: number }) => {
       const { addObject, updateObject, select } = useProject.getState()
       if (part.kind === 'stand') {
+        const standSize = part.size as PartSize
         addObject({
           id: newObjectId(),
           type: 'stand',
-          partSize: part.size,
+          partSize: standSize,
           x: mm.x,
           y: mm.y,
           rot: 0,
-          widthMm: STAND_DEFS[part.size].widthMm,
+          widthMm: STAND_DEFS[standSize].widthMm,
         })
         return
       }
@@ -194,7 +195,9 @@ export default function EditorApp() {
       if (best && best.distance < 25) {
         const target = useProject.getState().objects.find((o) => o.id === best.id)
         if (target) {
-          updateObject(best.id, { tabs: [...(target.tabs ?? []), { size: part.size, t: best.t }] })
+          updateObject(best.id, {
+            tabs: [...(target.tabs ?? []), { size: part.size as AttachmentId, t: best.t }],
+          })
           select(best.id)
         }
       }

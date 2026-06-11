@@ -1,9 +1,9 @@
 import { create } from 'zustand'
-import type { PartSize } from '../parts/defs'
+import type { AttachmentId, PartSize } from '../parts/defs'
 
-/** 画像オブジェクトに吸着したタブ（位置はカットライン輪郭上の弧長パラメータ） */
+/** 画像オブジェクトに吸着したパーツ（タブ・穴付きポッチ）。位置は輪郭上の弧長パラメータ */
 export interface PlacedTab {
-  size: PartSize
+  size: AttachmentId
   /** 輪郭上の位置 t ∈ [0,1) */
   t: number
 }

@@ -13,7 +13,7 @@ import { useUi } from '../stores/ui'
 import { ringsToSvgPath } from '../geometry/offset'
 import { getObjectGeometry } from '../pipeline/sources'
 import { largestRing, nearestParamOnRing } from '../parts/attach'
-import { TAB_DEFS, type PartSize } from '../parts/defs'
+import { ATTACHMENT_DEFS, STAND_DEFS, standMinWidth } from '../parts/defs'
 import { worldToLocal, type ObjectView, type PairIndicator } from './EditorApp'
 import type { Rect } from '../geometry/transform'
 import type { ViolationResult } from '../pipeline/violations'
@@ -31,7 +31,7 @@ interface Props {
   paper: { w: number; h: number }
   marginRect: Rect
   minGapMm: number
-  onDropPart: (part: { kind: 'tab' | 'stand'; size: PartSize }, mm: { x: number; y: number }) => void
+  onDropPart: (part: { kind: 'tab' | 'stand'; size: string }, mm: { x: number; y: number }) => void
 }
 
 interface ViewState {
@@ -467,7 +467,11 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
       useProject.getState().select(null)
     }
     if (drag.type === 'scale' && scaling) {
-      const width = Math.max(5, Math.min(300, drag.origWidth * scaling.factor))
+      const obj = useProject.getState().objects.find((o) => o.id === drag.id)
+      // 台座は穴の嵌合を守れる最小幅まで。画像は5mmまで
+      const minW =
+        obj?.type === 'stand' && obj.partSize ? standMinWidth(STAND_DEFS[obj.partSize]) : 5
+      const width = Math.max(minW, Math.min(300, drag.origWidth * scaling.factor))
       useProject.getState().updateObject(drag.id, { widthMm: Math.round(width * 10) / 10 }, true)
       setScaling(null)
     }
@@ -656,30 +660,36 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   style={{ pointerEvents: 'none' }}
                 />
               )}
-              {/* 吸着タブのラベル */}
+              {/* 吸着パーツのラベル（パーツの先の法線方向に表示） */}
               {layerVisible.cut &&
-                geo.tabMarkers.map((m) => (
-                  <g key={`tablabel-${m.index}`} style={{ pointerEvents: 'none' }}>
-                    <rect
-                      x={m.x - 7}
-                      y={m.y + TAB_DEFS[m.size].heightMm / 2 + 1}
-                      width={14}
-                      height={4.6}
-                      rx={2.3}
-                      fill="#eaf5f9"
-                      stroke="#8fb9cc"
-                      strokeWidth={0.25}
-                    />
-                    <text
-                      x={m.x}
-                      y={m.y + TAB_DEFS[m.size].heightMm / 2 + 4.4}
-                      textAnchor="middle"
-                      style={{ fontSize: 2.8, fill: '#4e89a3', fontWeight: 800 }}
-                    >
-                      {TAB_DEFS[m.size].label}
-                    </text>
-                  </g>
-                ))}
+                geo.tabMarkers.map((m) => {
+                  const label = ATTACHMENT_DEFS[m.size].label
+                  const w = label.length * 2.1 + 4
+                  const lx = m.x + m.nx * (ATTACHMENT_DEFS[m.size].markerMm + 5)
+                  const ly = m.y + m.ny * (ATTACHMENT_DEFS[m.size].markerMm + 5)
+                  return (
+                    <g key={`tablabel-${m.index}`} style={{ pointerEvents: 'none' }}>
+                      <rect
+                        x={lx - w / 2}
+                        y={ly - 2.4}
+                        width={w}
+                        height={4.8}
+                        rx={2.4}
+                        fill="#eaf5f9"
+                        stroke="#8fb9cc"
+                        strokeWidth={0.25}
+                      />
+                      <text
+                        x={lx}
+                        y={ly + 1.1}
+                        textAnchor="middle"
+                        style={{ fontSize: 2.8, fill: '#4e89a3', fontWeight: 800 }}
+                      >
+                        {label}
+                      </text>
+                    </g>
+                  )
+                })}
             </g>
           )
         })}
@@ -706,42 +716,108 @@ const CanvasView = forwardRef<CanvasHandle, Props>(function CanvasView(
                   strokeWidth={px(1.4)}
                   strokeDasharray={`${px(5)} ${px(3)}`}
                 />
-                {/* 拡縮ハンドル（四隅）。台座は寸法固定のため非表示 */}
+                {/* 拡縮ハンドル（四隅）。台座も外形は拡縮可（穴の寸法は固定） */}
+                {[
+                  [-w, -h],
+                  [w, -h],
+                  [w, h],
+                  [-w, h],
+                ].map(([hx, hy], i) => (
+                  <rect
+                    key={i}
+                    x={hx - hs}
+                    y={hy - hs}
+                    width={hs * 2}
+                    height={hs * 2}
+                    fill="#ffffff"
+                    stroke="var(--accent)"
+                    strokeWidth={px(1.4)}
+                    style={{ cursor: 'nwse-resize' }}
+                    onPointerDown={(e) => onScaleHandleDown(e, obj.id)}
+                  />
+                ))}
+                {/* 吸着パーツの操作UI: ピンクのスライドハンドル + ×削除ボタン */}
                 {obj.type === 'image' &&
-                  [
-                    [-w, -h],
-                    [w, -h],
-                    [w, h],
-                    [-w, h],
-                  ].map(([hx, hy], i) => (
-                    <rect
-                      key={i}
-                      x={hx - hs}
-                      y={hy - hs}
-                      width={hs * 2}
-                      height={hs * 2}
-                      fill="#ffffff"
-                      stroke="var(--accent)"
-                      strokeWidth={px(1.4)}
-                      style={{ cursor: 'nwse-resize' }}
-                      onPointerDown={(e) => onScaleHandleDown(e, obj.id)}
-                    />
-                  ))}
-                {/* タブのスライドハンドル */}
-                {obj.type === 'image' &&
-                  v.geo.tabMarkers.map((m) => (
-                    <circle
-                      key={`tabhandle-${m.index}`}
-                      cx={m.x}
-                      cy={m.y}
-                      r={px(7)}
-                      fill="rgba(234,245,249,0.9)"
-                      stroke="#4e89a3"
-                      strokeWidth={px(1.6)}
-                      style={{ cursor: 'grab' }}
-                      onPointerDown={(e) => onTabMarkerDown(e, obj.id, m.index)}
-                    />
-                  ))}
+                  v.geo.tabMarkers.map((m) => {
+                    // ×ボタンはハンドルの横（接線方向）に出す（ラベルは法線方向なので重ならない）
+                    const bx = m.x - m.ny * px(26)
+                    const by = m.y + m.nx * px(26)
+                    return (
+                      <g key={`tabhandle-${m.index}`}>
+                        {/* 当たり判定を広げる透明円 */}
+                        <circle
+                          cx={m.x}
+                          cy={m.y}
+                          r={px(17)}
+                          fill="transparent"
+                          style={{ cursor: 'grab' }}
+                          onPointerDown={(e) => onTabMarkerDown(e, obj.id, m.index)}
+                        />
+                        <circle
+                          cx={m.x}
+                          cy={m.y}
+                          r={px(10)}
+                          fill="var(--accent)"
+                          stroke="#ffffff"
+                          strokeWidth={px(2)}
+                          style={{ cursor: 'grab', pointerEvents: 'none' }}
+                        />
+                        {/* ⇄ グリップ記号（カットラインと混同させない） */}
+                        <text
+                          x={m.x}
+                          y={m.y + px(3.5)}
+                          textAnchor="middle"
+                          style={{
+                            fontSize: px(11),
+                            fill: '#ffffff',
+                            fontWeight: 800,
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                          }}
+                        >
+                          ⇄
+                        </text>
+                        {/* ×削除ボタン */}
+                        <g
+                          style={{ cursor: 'pointer' }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const cur = useProject.getState().objects.find((o) => o.id === obj.id)
+                            if (!cur?.tabs) return
+                            useProject
+                              .getState()
+                              .updateObject(obj.id, {
+                                tabs: cur.tabs.filter((_, j) => j !== m.index),
+                              })
+                          }}
+                        >
+                          <circle
+                            cx={bx}
+                            cy={by}
+                            r={px(8)}
+                            fill="#ffffff"
+                            stroke="var(--danger)"
+                            strokeWidth={px(1.6)}
+                          />
+                          <text
+                            x={bx}
+                            y={by + px(3.5)}
+                            textAnchor="middle"
+                            style={{
+                              fontSize: px(10),
+                              fill: 'var(--danger)',
+                              fontWeight: 800,
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                            }}
+                          >
+                            ×
+                          </text>
+                        </g>
+                      </g>
+                    )
+                  })}
                 {/* 回転ハンドル */}
                 <line
                   x1={0}
